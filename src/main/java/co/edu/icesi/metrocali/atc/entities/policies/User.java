@@ -1,16 +1,26 @@
 package co.edu.icesi.metrocali.atc.entities.policies;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.springframework.security.core.CredentialsContainer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import co.edu.icesi.metrocali.atc.entities.events.UsersTrack;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class User {
+public class User implements UserDetails, CredentialsContainer, Recoverable{
+ 	
+	private static final long serialVersionUID = -4730778099134900170L;
 
-	//Entities fields
 	private Integer id;
 
 	private String accountName;
@@ -28,37 +38,48 @@ public class User {
 	private List<Setting> settings;
 	
 	private List<UsersTrack> userTracks;
-	
-	//Spring security fields
-	private String username;
-	
-	private boolean enabled = true;
-	
-	private boolean accountNonExpired = true;
-	
-	private boolean credentialsNonExpired = true;
-	
-	private boolean accountNonLocked = true;
-	
-//	private List<GrantedAuthority> authorities = new ArrayList<>();
-//	
-//	public void fillSecurityFields() {
-//		
-//		if(this.roles != null && !this.roles.isEmpty()) {
-//			
-//			this.username = this.accountName;
-//			
-//			roles.stream().forEach(role -> {
-//				this.authorities.add(
-//					new SimpleGrantedAuthority("ROLE_" + role.getName())
-//				);
-//			});
-//			
-//		}else {
-//			throw new ATCRuntimeException("The roles collection "
-//					+ "not initialized.");
-//		}
-//		
-//	}
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		
+		Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        
+		this.roles.forEach(role -> {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+		});
+		
+		return authorities;
+		
+	}
+
+	@Override
+	public String getUsername() {
+		return this.accountName;
+	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
+
+	@Override
+	public boolean isEnabled() {
+		return true;
+	}
+
+	@Override
+	public void eraseCredentials() {
+		this.password = null;
+	}
 
 }

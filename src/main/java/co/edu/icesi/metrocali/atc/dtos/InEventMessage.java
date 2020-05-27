@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import co.edu.icesi.metrocali.atc.constants.SourceTypes;
@@ -22,6 +23,7 @@ import lombok.Setter;
  * 
  * @author <a href="mailto:johan.ballesteros@outlook.com">Johan Ballesteros</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Getter
 @Setter
 public class InEventMessage {

@@ -15,8 +15,12 @@ import lombok.Setter;
 @JsonRootName("user")
 @Getter
 @Setter
-public class Controller extends User{
-		
+public class Controller extends User implements Comparable<Controller>{
+	
+	public Controller() {
+		this.workLoad = 0;
+	}
+	
 	private List<UsersRemark> userRemarks;
 	
 	private List<EventRemarks> eventRemarks;
@@ -24,7 +28,7 @@ public class Controller extends User{
 	private List<EventTrack> eventTracks;
 	
 	@JsonIgnore
-	private int workLoad;
+	private Integer workLoad;
 	
 	public void increaseWorkLoad(int newWorkLoad) {
 		this.workLoad += newWorkLoad;
@@ -32,6 +36,11 @@ public class Controller extends User{
 	
 	public void decreaseWorkLoad(int workLoadResolved) {
 		this.workLoad -= workLoadResolved;
+	}
+
+	@Override
+	public int compareTo(Controller o) {
+		return this.workLoad.compareTo(o.workLoad);
 	}
 	
 }

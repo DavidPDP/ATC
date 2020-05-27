@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.services;
+package co.edu.icesi.metrocali.atc.services.planning;
 
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -6,6 +6,7 @@ import java.util.PriorityQueue;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 
 /**
@@ -19,7 +20,7 @@ public class ResourcePlanning {
 			
 	private PriorityQueue<Event> pendingEvents;
 
-	private PriorityQueue<User> availableControllers;
+	private PriorityQueue<Controller> availableControllers;
 	
 	private Object eventLock;
 	
@@ -58,7 +59,7 @@ public class ResourcePlanning {
 		}
 	}
 	
-	public void addAvailableController(User user) {
+	public void addAvailableController(Controller user) {
 		synchronized (controllerLock) {
 			availableControllers.add(user);
 		}

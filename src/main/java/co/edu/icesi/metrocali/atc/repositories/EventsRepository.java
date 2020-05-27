@@ -22,8 +22,15 @@ import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.exceptions.BlackboxException;
 
+/**
+ * Represents repository pattern from the DDD approach. 
+ * This means that it handles a context (Aggregate Root) encapsulating 
+ * the access to the child objects.
+ * 
+ * This repository is responsible for handling the event aggreagte root.
+ */
 @Repository
-public class EventManagmentRepository {
+public class EventsRepository {
 	
 	private RestTemplate blackboxApi;
 	
@@ -32,7 +39,7 @@ public class EventManagmentRepository {
 	private Object blackboxLock;
 	
 	@Autowired
-	public EventManagmentRepository(@Qualifier("blackboxApi") RestTemplate blackboxApi,
+	public EventsRepository(@Qualifier("blackboxApi") RestTemplate blackboxApi,
 			@Value("${blackbox.apis.events}") String blackboxEventsApiURL) {
 		this.blackboxApi = blackboxApi;
 		this.blackboxEventsApiURL = blackboxEventsApiURL;
@@ -206,4 +213,12 @@ public class EventManagmentRepository {
 		}
 	}
 	
+	public List<Event> retrieveLastEvent(String interval){
+				
+		return blackboxApi.exchange(blackboxEventsApiURL 
+			+ "/events/lasted/" + interval, HttpMethod.GET, null, 
+			new ParameterizedTypeReference<List<Event>>() {})
+			.getBody();
+		
+	}
 }

@@ -27,6 +27,7 @@ public class HTTPRestOperatorsAPI {
 		this.operatorsService = operatorsService;
 	}
 	
+	//CRUD Operator ----------------------------------
 	@PostMapping
 	public ResponseEntity<HttpStatus> createOperator(
 			@RequestBody User operator) {
@@ -67,5 +68,6 @@ public class HTTPRestOperatorsAPI {
 			return new ResponseEntity<HttpStatus>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	//------------------------------------------------
 	
 }

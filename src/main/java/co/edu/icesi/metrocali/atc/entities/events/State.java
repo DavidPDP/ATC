@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.entities.events;
 
 import java.util.List;
 
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @Getter
 @Setter
-public class State {
+public class State implements Recoverable{
 
 	private Integer id;
 	

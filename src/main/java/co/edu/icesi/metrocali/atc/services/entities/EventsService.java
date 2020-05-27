@@ -29,14 +29,14 @@ import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.exceptions.EventOwnerException;
-import co.edu.icesi.metrocali.atc.repositories.EventManagmentRepository;
-import co.edu.icesi.metrocali.atc.services.ResourcePlanning;
-import co.edu.icesi.metrocali.atc.services.oprealtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
+import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
+import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
 
 @Service
 public class EventsService {
 	
-	private EventManagmentRepository eventManagmentRepository;
+	private EventsRepository eventManagmentRepository;
 	
 	private LocalRealtimeOperationStatus realtimeStatus;
 	
@@ -45,7 +45,7 @@ public class EventsService {
 	private ResourcePlanning resourcePlanning;
 	
 	@Autowired
-	public EventsService(EventManagmentRepository eventManagmentRepository,
+	public EventsService(EventsRepository eventManagmentRepository,
 			LocalRealtimeOperationStatus realtimeStatus,
 			OperatorsService operatorsService,
 			ResourcePlanning resourcePlanning) {
@@ -442,6 +442,10 @@ public class EventsService {
 			throw new EventOwnerException(accountName 
 					+ " controller doesn't own the event.");
 		}
+	}
+	
+	public List<Event> retrieveLastEvents(@NonNull String interval){
+		return eventManagmentRepository.retrieveLastEvent(interval);
 	}
 	
 }

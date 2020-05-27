@@ -9,18 +9,18 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.entities.events.Category;
-import co.edu.icesi.metrocali.atc.repositories.EventManagmentRepository;
-import co.edu.icesi.metrocali.atc.services.oprealtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
+import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
 
 @Service
 public class CategoriesService {
 	
-	private EventManagmentRepository categoriesRepository;
+	private EventsRepository categoriesRepository;
 	
 	private LocalRealtimeOperationStatus realtimeOperationStatus;
 	
 	@Autowired
-	public CategoriesService(EventManagmentRepository categoriesRepository,
+	public CategoriesService(EventsRepository categoriesRepository,
 			LocalRealtimeOperationStatus realtimeOperationStatus) {
 		this.categoriesRepository = categoriesRepository;
 		this.realtimeOperationStatus = realtimeOperationStatus;

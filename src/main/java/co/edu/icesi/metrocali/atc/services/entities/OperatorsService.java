@@ -7,6 +7,10 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.OperatorTypes;
@@ -18,11 +22,11 @@ import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.exceptions.BadRequestException;
 import co.edu.icesi.metrocali.atc.exceptions.BlackboxException;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
-import co.edu.icesi.metrocali.atc.services.ResourcePlanning;
-import co.edu.icesi.metrocali.atc.services.oprealtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
+import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
 
 @Service
-public class OperatorsService {
+public class OperatorsService implements UserDetailsService{
 	
 	private LocalRealtimeOperationStatus realtimeOpStatus;
 	
@@ -30,13 +34,19 @@ public class OperatorsService {
 	
 	private ResourcePlanning resourcePlanning;
 	
+	private BCryptPasswordEncoder bcryptEncoder;
+	
 	@Autowired
 	public OperatorsService(LocalRealtimeOperationStatus realtimeOpStatus,
 			OperatorsRepository operatorsRepository,
-			ResourcePlanning resourcePlanning) {
+			ResourcePlanning resourcePlanning,
+			BCryptPasswordEncoder bcryptEncoder) {
+		
 		this.realtimeOpStatus = realtimeOpStatus;
 		this.operatorsRepository = operatorsRepository;
 		this.resourcePlanning = resourcePlanning;
+		this.bcryptEncoder = bcryptEncoder;
+		
 	}
 	
 	public User retrieveOperator(String accountName, OperatorTypes type) {
@@ -118,6 +128,9 @@ public class OperatorsService {
 	
 	public void persistOperator(@NonNull User operator) {
 		try {
+			// Encrypt password
+			String encryptedPassword = bcryptEncoder.encode(operator.getPassword());
+			operator.setPassword(encryptedPassword);
 			operatorsRepository.saveUser(operator);
 		}catch(BlackboxException e) {
 			
@@ -147,6 +160,24 @@ public class OperatorsService {
 			}
 			
 		}
+	}
+	
+	public List<Controller> retrieveOnlineControllers(){
+		return operatorsRepository.retrieveAllOnlineControllers();
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) 
+			throws UsernameNotFoundException {
+		
+		Optional<User> user = operatorsRepository.retrieveOperator(username);
+		
+		if(user.isPresent()) {
+			return user.get();
+		}else {
+			throw new UsernameNotFoundException("Invalid username.");
+		}
+		
 	}
 	
 }

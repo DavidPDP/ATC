@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -12,8 +13,8 @@ import lombok.ToString;
 @ToString
 @Getter
 @Setter
-public class Category {
-
+public class Category implements Recoverable{
+	
 	private Integer id;
 
 	@JsonProperty("base_priority")

@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.services.oprealtime;
+package co.edu.icesi.metrocali.atc.services.realtime;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +23,8 @@ import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
+import co.edu.icesi.metrocali.atc.services.recovery.RecoveryPoint;
 
 /**
  * Represents the concrete implementation of the operation 
@@ -32,7 +34,8 @@ import co.edu.icesi.metrocali.atc.entities.policies.User;
  * @author <a href="mailto:johan.ballesteros@outlook.com">Johan Ballesteros</a>
  */
 @Service
-public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
+public class LocalRealtimeOperationStatus 
+	implements RealtimeOperationStatus, RecoveryPoint {
 	
 	private Map<String, Omega> omegas;
 	
@@ -55,26 +58,6 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		initMaps();
 	}
 	
-	public void print() {
-		System.out.println("Controller: ------------------");
-		for (Controller controller : controllers.values()) {
-			System.out.println(controller.getAccountName());
-		}
-		System.out.println("Controller Events: -------------");
-		for (Map.Entry<String, List<Event>> entry: 
-			controllersEvents.entrySet()) {
-			System.out.println(entry.getKey());
-			for (Event event : entry.getValue()) {
-				System.out.println(event.getCode());
-				System.out.println(event.getLastEventTrack().getState().getName());
-				System.out.println("Track: ");
-				for (EventTrack track : event.getEventsTracks()) {
-					System.out.println(track.getId());
-				}
-			}
-		}
-	}
-	
 	private void initMaps() {
 		omegas = new HashMap<>();
 		controllers = new HashMap<>();
@@ -86,16 +69,75 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		settings = new HashMap<>();
 	}
 	
-	//TODO create abstract class ATCEntity and refactor this method with Map parameter
+	//Recover Methods --------------------------------
 	@Override
-	public void recoverypoint(List<State> states, 
-			List<Category> categories, List<Setting> settings) {
-		updateStates(states);
-		updateCategories(categories);
-		//updateSettings(settings);
+	public void recoverypoint(Map<String,
+			List<? extends Recoverable>> entities) {
+		
+		recoverStates(entities.get("states"));
+		recoverCategories(entities.get("categories"));
+		recoverControllers(entities.get("controllers"));
+		recoverEvents(entities.get("events"));
+		
 	}
 	
-	private void updateSettings(List<Setting> settings) {
+	private void recoverCategories(List<? extends Recoverable> categories) {
+		
+		this.categories.clear();
+		
+		for (Recoverable recoverableCategory : categories) {
+			Category category = (Category) recoverableCategory;
+			this.categories.put(category.getName(), category);
+		}
+		
+	}
+	
+	private void recoverStates(List<? extends Recoverable> states) {
+		
+		this.operatorsState.clear();
+		this.eventsState.clear();
+		
+		for (Recoverable recoverableState : states) {
+			State state = (State) recoverableState;
+			if(state.getStateTypeName().equals(StateType.Users.name())) {
+				this.operatorsState.put(state.getName(), state);
+			}else {
+				this.eventsState.put(state.getName(), state);
+			}
+		}
+		
+	}
+	
+	private void recoverControllers(
+			List<? extends Recoverable> controllers) {
+		
+		this.controllers.clear();
+		
+		for (Recoverable recoverableController : controllers) {
+			Controller controller = (Controller) recoverableController;
+			this.controllers.put(controller.getAccountName(), controller);
+		}
+		
+	}
+	
+	private void recoverEvents(List<? extends Recoverable> events) {
+		for (Recoverable recoverableEvent : events) {
+			Event event = (Event) recoverableEvent;
+			this.events.put(event.getCode(), event);
+		}
+	}
+	
+	//------------------------------------------------
+		
+	//Add and update operation status methods --------
+	@Override
+	public void assignEvent(Event event, String accountName) {
+		controllersEvents.computeIfAbsent(accountName, 
+			user -> new ArrayList<>()).add(event);
+	}
+	
+	@Override
+	public void updateSettings(List<Setting> settings) {
 		
 		this.settings.clear();
 		
@@ -105,6 +147,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		
 	}
 	
+	@Override
 	public void updateStates(List<State> states) {
 		
 		this.operatorsState.clear();
@@ -120,7 +163,8 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		
 	}
 	
-	private void updateCategories(List<Category> categories) {
+	@Override
+	public void updateCategories(List<Category> categories) {
 		
 		this.categories.clear();
 		
@@ -130,58 +174,67 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		
 	}
 	
-	public Optional<Setting> retriveSetting(@NonNull Settings setting) {
-		return Optional.ofNullable(
-			this.settings.get(setting.name())
-		);
-	}
-	
-	public List<User> retrieveAllControllers(){
-		return new ArrayList<>(controllers.values());
-	}
-	
-	public List<Omega> retrieveAllOmegas(){
-		return new ArrayList<>(omegas.values());
-	}
-	
-	public Optional<Controller> retrieveController(String accountName) {
-		return Optional.ofNullable(controllers.getOrDefault(accountName, null));
-	}
-	
+	@Override
 	public boolean addOrUpdateController(Controller controller) {
 		controllers.put(controller.getAccountName(), controller);
 		return true;
 	}
 	
+	@Override
 	public boolean addOrUpdateCategory(Category category) {
 		categories.put(category.getName(), category);
 		return true;
 	}
 	
+	@Override
 	public boolean addOrUpdateEventState(State state) {
 		eventsState.put(state.getName(), state);
 		return true;
 	}
 	
+	@Override
 	public boolean addOrUpdateUserState(State state) {
 		operatorsState.put(state.getName(), state);
 		return true;
 	}
 	
+	@Override
 	public boolean addOrUpdateEvent(Event event) {
 		events.put(event.getCode(), event);
 		return true;
 	}
 	
+	//------------------------------------------------
+	
+	//Retrieve methods -------------------------------
+	@Override
+	public Optional<Setting> retrieveSetting(@NonNull Settings setting) {
+		return Optional.ofNullable(
+			this.settings.get(setting.name())
+		);
+	}
+	
+	@Override
+	public List<User> retrieveAllControllers(){
+		return new ArrayList<>(controllers.values());
+	}
+	
+	@Override
+	public List<Omega> retrieveAllOmegas(){
+		return new ArrayList<>(omegas.values());
+	}
+	
+	@Override
+	public Optional<Controller> retrieveController(String accountName) {
+		return Optional.ofNullable(controllers.getOrDefault(accountName, null));
+	}
+	
+	@Override
 	public Event retrieveEvent(String eventCode) {
 		return events.get(eventCode);
 	}
 	
-	public void assignEvent(Event event, String accountName) {
-		controllersEvents.computeIfAbsent(accountName, 
-			user -> new ArrayList<>()).add(event);
-	}
-	
+	@Override
 	public List<Event> retrieveEventsByStates(String accountName, 
 			List<String> states) {
 		if(controllersEvents.isEmpty()) {
@@ -200,6 +253,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * Retrieves all loaded user states.
 	 * @return {@link List} with all loaded user states.
 	 */
+	@Override
 	public List<State> retrieveAllUserStates() {
 		if(operatorsState.isEmpty()) {
 			return Collections.emptyList();
@@ -213,6 +267,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * @param name the user state's business identifier.
 	 * @return {@link Optional} with the specific user state searched.
 	 */
+	@Override
 	public Optional<State> retrieveUserState(String name) {
 		return Optional.of(operatorsState.get(name));
 	}
@@ -221,6 +276,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * Retrieves all loaded event states.
 	 * @return {@link List} with all loaded event states.
 	 */
+	@Override
 	public List<State> retrieveAllEventStates() {
 		if(eventsState.isEmpty()) {
 			return Collections.emptyList();
@@ -234,6 +290,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * @param name the event state's business identifier.
 	 * @return {@link Optional} with the specific event state searched.
 	 */
+	@Override
 	public Optional<State> retrieveEventState(@NonNull String name) {
 		return Optional.of(eventsState.get(name));
 	}
@@ -242,6 +299,7 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * Retrieves all loaded categories.
 	 * @return {@link List} with all loaded categories.
 	 */
+	@Override
 	public List<Category> retrieveAllCategories(){
 		if(categories.isEmpty()) {
 			return Collections.emptyList();
@@ -255,10 +313,12 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 	 * @param name the category's business identifier.
 	 * @return {@link Optional} with the specific category searched.
 	 */
+	@Override
 	public Optional<Category> retrieveCategory(@NonNull String name) {
 		return Optional.of(categories.get(name));
 	}
 
+	@Override
 	public Optional<Protocol> retrieveProtocolStep(@NonNull String eventCode,
 			@NonNull String stepName) {
 		System.out.println("PASO: " + stepName);
@@ -272,8 +332,31 @@ public class LocalRealtimeOperationStatus implements RealtimeOperationStatus {
 		
 	}
 	
-	public Optional<Setting> retrieveSetting(@NonNull Settings setting) {
-		return Optional.ofNullable(this.settings.get(setting.name()));
+	//------------------------------------------------
+	
+	public void print() {
+		for (Map.Entry<String,Event> mevent : this.events.entrySet()) {
+			for (EventTrack track : mevent.getValue().getEventsTracks()) {
+				System.out.println(track.getCode());
+			}
+		}
+//		System.out.println("Controller: ------------------");
+//		for (Controller controller : controllers.values()) {
+//			System.out.println(controller.getAccountName());
+//		}
+//		System.out.println("Controller Events: -------------");
+//		for (Map.Entry<String, List<Event>> entry: 
+//			controllersEvents.entrySet()) {
+//			System.out.println(entry.getKey());
+//			for (Event event : entry.getValue()) {
+//				System.out.println(event.getCode());
+//				System.out.println(event.getLastEventTrack().getState().getName());
+//				System.out.println("Track: ");
+//				for (EventTrack track : event.getEventsTracks()) {
+//					System.out.println(track.getId());
+//				}
+//			}
+//		}
 	}
 	
 }

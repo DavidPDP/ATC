@@ -45,6 +45,26 @@ public class OperatorsRepository {
 		this.blackboxPoliciesApiURL = blackboxPoliciesApiURL;
 	}
 		
+	public Optional<User> retrieveOperator(String accountName) {
+		
+		try {
+			
+			Optional<User> operator = Optional.of(
+				blackboxApi.exchange(blackboxPoliciesApiURL 
+				+ "/users/accountName/" + accountName, 
+				HttpMethod.GET, null, User.class).getBody()
+			);
+			
+			return operator;
+			
+		} catch (HttpServerErrorException e) {
+			throw new BlackboxException("blacbox don't respond.");
+		}
+		
+	}
+	
+	
+	
 	/**
 	 * Retrieves all controllers regardless of whether they are 
 	 * active or not (deep copy).
@@ -88,6 +108,8 @@ public class OperatorsRepository {
 		);
 
 	}
+	
+	
 	
 	/**
 	 * Retrieves the user entity, consuming the Black-box API.
@@ -147,10 +169,10 @@ public class OperatorsRepository {
 		}
 	}
 	
-	public List<User> retrieveAllOnlineControllers() {
+	public List<Controller> retrieveAllOnlineControllers() {
 		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users/controllers/active", 
 			HttpMethod.GET, null, 
-			new ParameterizedTypeReference<List<User>>() {}).getBody();
+			new ParameterizedTypeReference<List<Controller>>() {}).getBody();
 	}
 	
 	public List<Setting> retrieveAllSettings(){
