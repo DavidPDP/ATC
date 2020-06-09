@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import co.edu.icesi.metrocali.atc.constants.PermissionLevels;
+import co.edu.icesi.metrocali.atc.constants.PermissionLevel;
 import co.edu.icesi.metrocali.atc.dtos.InEventMessage;
-import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventRemarks;
 import co.edu.icesi.metrocali.atc.entities.events.Step;
@@ -53,10 +52,10 @@ public class HTTPRestEventsAPI {
 	}
 	
 	//CRUD Event ----------------------------------
-	@PreAuthorize("hasRole('" + PermissionLevels.OMEGA + "') "
-		+ "|| hasRole('" + PermissionLevels.DATAGRAMS + "') "
-		+ "|| hasRole('" + PermissionLevels.IMPACT_MATRIX + "') "
-		+ "|| hasRole('" + PermissionLevels.ANALYTICS + "')"
+	@PreAuthorize("hasRole('" + PermissionLevel.OMEGA + "') "
+		+ "|| hasRole('" + PermissionLevel.DATAGRAMS + "') "
+		+ "|| hasRole('" + PermissionLevel.IMPACT_MATRIX + "') "
+		+ "|| hasRole('" + PermissionLevel.ANALYTICS + "')"
 	)
 	@PostMapping
 	public ResponseEntity<String> createEvent(
@@ -73,7 +72,7 @@ public class HTTPRestEventsAPI {
 	//---------------------------------------------
 	
 	//Change Event state (Track) ------------------
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "')")
 	@PatchMapping("/accepted/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> acceptEvent(
 			@PathVariable("accountName") String accountName, 
@@ -86,7 +85,7 @@ public class HTTPRestEventsAPI {
 		}
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "')")
 	@PatchMapping("/rejected/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> rejectEvent(
 			@PathVariable("accountName") String accountName, 
@@ -100,7 +99,7 @@ public class HTTPRestEventsAPI {
 		}
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "')")
 	@PatchMapping("/completed/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> completeEvent(
 			@PathVariable("accountName") String accountName,
@@ -113,7 +112,7 @@ public class HTTPRestEventsAPI {
 		}
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "')")
 	@PatchMapping("/on_holded/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> putOnHoldEvent(
 			@PathVariable("accountName") String accountName,
@@ -127,7 +126,7 @@ public class HTTPRestEventsAPI {
 		}
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevels.OMEGA + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.OMEGA + "')")
 	@PatchMapping("/validated/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> validateEvent(
 			@PathVariable("accountName") String accountName,
@@ -140,7 +139,7 @@ public class HTTPRestEventsAPI {
 		}
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevels.OMEGA + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.OMEGA + "')")
 	@PatchMapping("/send_back/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> sendBackEvent(
 			@PathVariable("accountName") String accountName, 
@@ -156,7 +155,7 @@ public class HTTPRestEventsAPI {
 	//---------------------------------------------
 	
 	//CRUD Protocol step
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "')")
 	@PostMapping("/{eventCode}/protocols")
 	public ResponseEntity<HttpStatus> completeProtocolStep(
 			@PathVariable("eventCode") String eventCode,
@@ -198,18 +197,12 @@ public class HTTPRestEventsAPI {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 	}
-	
-	@GetMapping("/categories")
-	public ResponseEntity<List<Category>> retrieveCategories(){
-		return new ResponseEntity<List<Category>>(
-				eventService.retrieveAllCategories(true), HttpStatus.OK);
-	}
 	//---------------------------------------------
 	
 	//CRUD Remark ---------------------------------
-	@PreAuthorize("hasRole('" + PermissionLevels.CONTROLLER + "') "
-		+ "|| hasRole('" + PermissionLevels.OMEGA + "') "
-		+ "|| hasRole('" + PermissionLevels.SUPERVISOR + "')"
+	@PreAuthorize("hasRole('" + PermissionLevel.CONTROLLER + "') "
+		+ "|| hasRole('" + PermissionLevel.OMEGA + "') "
+		+ "|| hasRole('" + PermissionLevel.SUPERVISOR + "')"
 	)
 	@PostMapping("/{accountName}/{eventCode}/event_tracks/last")
 	public ResponseEntity<HttpStatus> createRemark(
@@ -229,7 +222,7 @@ public class HTTPRestEventsAPI {
 	//---------------------------------------------
 	
 	//Update Priority Queue -----------------------
-	@PreAuthorize("hasRole('" + PermissionLevels.OMEGA + "')")
+	@PreAuthorize("hasRole('" + PermissionLevel.OMEGA + "')")
 	@PatchMapping("/{accountName}/{eventCode}/priority/{priority}")
 	public ResponseEntity<HttpStatus> updatePriority(
 			@RequestParam String accountName,

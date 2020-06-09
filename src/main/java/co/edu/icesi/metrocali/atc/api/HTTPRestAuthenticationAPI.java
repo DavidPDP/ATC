@@ -41,6 +41,7 @@ public class HTTPRestAuthenticationAPI {
 		
 	}
 	
+	//Authentication --------------------------------
 	@PostMapping("/sign_in/{operatorType}")
 	public ResponseEntity<ComplexOutputMessage> signIn(
 			@PathVariable OperatorType operatorType,
@@ -93,20 +94,21 @@ public class HTTPRestAuthenticationAPI {
 	}
 	
 	@DeleteMapping("/sign_out/{operatorType}/{accountName}")
-	public void signOutController(
-			@PathVariable OperatorType operatorType,
+	public void signOut(@PathVariable OperatorType operatorType,
 			@PathVariable String accountName) {
 		
-		operatorsService.unregisterOperator(
-				accountName, operatorType);
+		operatorsService.unregisterOperator(accountName, operatorType);
 		
 	}
+	//-----------------------------------------------
 	
+	//Session ---------------------------------------
+	//TODO refresh strategy
 	@PostMapping("/refresh_session/{accountName}")
 	public ResponseEntity<SessionToken> refreshSession(
 			@PathVariable String operatorType,
 			@RequestBody User controller) {
 		return null;
 	}
-	
+	//-----------------------------------------------
 }

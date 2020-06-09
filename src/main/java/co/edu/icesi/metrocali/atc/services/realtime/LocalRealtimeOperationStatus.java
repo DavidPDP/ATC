@@ -127,7 +127,7 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	private void recoverCategories(List<? extends Recoverable> categories) {
-		
+		System.out.println("ENTRAAA");
 		this.categories.clear();
 		
 		for (Recoverable recoverableCategory : categories) {
@@ -150,18 +150,18 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	private void recoverEvents(List<? extends Recoverable> events) {
-		for (Recoverable recoverableEvent : events) {
-			Event event = (Event) recoverableEvent;
-			this.events.put(event.getCode(), event);
-		}
+//		for (Recoverable recoverableEvent : events) {
+//			Event event = (Event) recoverableEvent;
+//			this.events.put(event.getCode(), event);
+//		}
 	}
 	
 	private void recoverOperatorsTracks(
 			List<? extends Recoverable> operatorsTracks) {
-		for (Recoverable recoverableEvent : operatorsTracks) {
-			//UserTrack userTrack = (Event) recoverableEvent;
-			//this.events.put(event.getCode(), event);
-		}
+//		for (Recoverable recoverableEvent : operatorsTracks) {
+//			//UserTrack userTrack = (Event) recoverableEvent;
+//			//this.events.put(event.getCode(), event);
+//		}
 	}
 	
 	private void recoverEventTracks(

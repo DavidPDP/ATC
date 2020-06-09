@@ -9,6 +9,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
 
@@ -17,13 +18,17 @@ public class CategoriesService {
 	
 	private EventsRepository categoriesRepository;
 	
+	private CategoriesRepository catego;
+	
 	private LocalRealtimeOperationStatus realtimeOperationStatus;
 	
 	@Autowired
 	public CategoriesService(EventsRepository categoriesRepository,
-			LocalRealtimeOperationStatus realtimeOperationStatus) {
+			LocalRealtimeOperationStatus realtimeOperationStatus,
+			CategoriesRepository catego) {
 		this.categoriesRepository = categoriesRepository;
 		this.realtimeOperationStatus = realtimeOperationStatus;
+		this.catego = catego;
 	}
 	
 	/**
@@ -67,5 +72,18 @@ public class CategoriesService {
 				throw new NoSuchElementException();
 			}
 		}
+	}
+	
+	public void create(@NonNull Category category) {
+		catego.save(category);
+	}
+	
+	public Category update(@NonNull Category category) {
+		catego.save(category);
+		return category;
+	}
+	
+	public void delete(@NonNull String name) {
+		catego.delete(name);
 	}
 }

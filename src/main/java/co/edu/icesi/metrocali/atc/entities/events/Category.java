@@ -8,11 +8,8 @@ import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.ToString;
 
-@ToString
-@Getter
-@Setter
+@Getter @Setter
 public class Category implements Recoverable{
 	
 	private Integer id;
@@ -23,9 +20,17 @@ public class Category implements Recoverable{
 	@NonNull
 	private String name;
 	
-	private String parent;
+	private Category category;
 
 	@JsonProperty("protocols")
 	private List<Protocol> protocols;
 
+	
+	public void merge(Category category) {
+		
+		if(this.id == null) {
+			this.id = category.getId();
+		}
+		
+	}
 }

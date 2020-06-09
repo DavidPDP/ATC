@@ -214,11 +214,16 @@ public class EventsRepository {
 	}
 	
 	public List<Event> retrieveLastEvent(String interval){
-				
+		
+		try {
+		
 		return blackboxApi.exchange(blackboxEventsApiURL 
-			+ "/events/lasted/" + interval, HttpMethod.GET, null, 
+			+ "/events/lasted?interval=" + interval, HttpMethod.GET, null, 
 			new ParameterizedTypeReference<List<Event>>() {})
-			.getBody();
+		.getBody();
+		}catch(Exception e) {
+			return null;
+		}
 		
 	}
 }

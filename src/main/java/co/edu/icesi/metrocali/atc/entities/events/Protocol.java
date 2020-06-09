@@ -4,11 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
-@ToString
-@Getter
-@Setter
+@Getter @Setter
 public class Protocol {
 
 	private Integer id;

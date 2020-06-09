@@ -1,6 +1,6 @@
 package co.edu.icesi.metrocali.atc.constants;
 
-public class PermissionLevels {
+public class PermissionLevel {
 	
 	public static final String ADMIN = "Admin";
 	public static final String CONTROLLER = "Controller";

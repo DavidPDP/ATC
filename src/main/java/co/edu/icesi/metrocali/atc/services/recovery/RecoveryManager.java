@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
@@ -28,7 +27,6 @@ public class RecoveryManager {
 	
 	private List<RecoveryPoint> recoveryPoints;
 	
-	@Autowired
 	public RecoveryManager(EventsService eventsService,
 			LocalRealtimeOperationStatus realtimeStatus,
 			OperatorsService operatorsService,
@@ -85,6 +83,7 @@ public class RecoveryManager {
 					retrieveRecoveryPoints();
 			
 			for (RecoveryPoint recoveryPoint : recoveryPoints) {
+				System.out.println(recoveryPoint.getClass().getName());
 				recoveryPoint.recoverypoint(entities);
 			}
 			//-------------------------------------------
