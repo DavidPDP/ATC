@@ -1,6 +1,8 @@
-package co.edu.icesi.metrocali.atc.exceptions;
+package co.edu.icesi.metrocali.atc.exceptions.bb;
 
 import org.springframework.lang.Nullable;
+
+import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 
 public class ExternalApiResponseException extends ATCRuntimeException {
 

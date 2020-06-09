@@ -14,7 +14,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.EventStates;
-import co.edu.icesi.metrocali.atc.constants.OperatorTypes;
+import co.edu.icesi.metrocali.atc.constants.OperatorType;
 import co.edu.icesi.metrocali.atc.constants.SourceTypes;
 import co.edu.icesi.metrocali.atc.constants.UserStates;
 import co.edu.icesi.metrocali.atc.dtos.InEventMessage;
@@ -118,7 +118,7 @@ public class EventsService {
 			String author, EventStates eventState) {
 		
 		Controller user = (Controller) operatorsService.retrieveOperator(
-			author, OperatorTypes.Controller
+			author, OperatorType.Controller
 		);
 		
 		State state = retrieveEventState(eventState);
@@ -153,7 +153,7 @@ public class EventsService {
 			String author, int priority) {
 		
 		Controller user = (Controller) operatorsService.retrieveOperator(
-			author, OperatorTypes.Controller
+			author, OperatorType.Controller
 		);
 		
 		EventTrack lastEventTrack = event.getLastEventTrack();
@@ -191,7 +191,7 @@ public class EventsService {
 		
 		Controller author = 
 			(Controller) operatorsService.retrieveOperator(accountName, 
-					OperatorTypes.Controller);
+					OperatorType.Controller);
 		
 		EventTrack createdTrack = new EventTrack(
 			basePriority,
@@ -313,10 +313,12 @@ public class EventsService {
 	}
 	
 	public void rejectEvent(@NonNull String accountName,
-			@NonNull String eventCode) {
+			@NonNull String eventCode,
+			@NonNull EventRemarks remark) {
 		Event event = realtimeStatus.retrieveEvent(eventCode);
 		if(isEventOwner(event, accountName)) {
 			createTrack(event, accountName, EventStates.Rejected);
+			event.getLastEventTrack().addEventRemark(remark);
 			realtimeStatus.print();
 			realtimeStatus.addOrUpdateEvent(event);
 			resourcePlanning.addPendingEvent(event);
@@ -334,6 +336,8 @@ public class EventsService {
 		if(isEventOwner(event, accountName)) {
 			createTrack(event, accountName, EventStates.Solved);
 			realtimeStatus.addOrUpdateEvent(event);
+			resourcePlanning.addAvailableController(
+					realtimeStatus.retrieveController(accountName).get());
 		}else {
 			throw new EventOwnerException(accountName 
 					+ " controller doesn't own the event.");
@@ -431,10 +435,12 @@ public class EventsService {
 	}
 	
 	public void sendBack(@NonNull String eventCode, 
-			@NonNull String accountName) {
+			@NonNull String accountName,
+			@NonNull EventRemarks remark) {
 		Event event = realtimeStatus.retrieveEvent(eventCode);
 		if(isEventOwner(event, accountName)) {
 			createTrack(event, accountName, EventStates.Send_Back);
+			event.getLastEventTrack().addEventRemark(remark);
 			createTrack(event, accountName, EventStates.Pending);
 			realtimeStatus.addOrUpdateEvent(event);
 			resourcePlanning.addPendingEvent(event);

@@ -27,7 +27,7 @@ public class AtcApplication {
 		
 		//Timer Task
 		EventAllocation task = context.getBean(EventAllocation.class);
-		new Timer().schedule((TimerTask) task, 0,5000);
+		new Timer().schedule((TimerTask) task, 0, 5000);
 		//--------------
 		
 	}

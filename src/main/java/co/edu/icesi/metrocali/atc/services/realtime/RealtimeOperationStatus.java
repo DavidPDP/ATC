@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.springframework.lang.NonNull;
 
-import co.edu.icesi.metrocali.atc.constants.Settings;
+import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.Protocol;
@@ -37,7 +37,9 @@ public interface RealtimeOperationStatus {
 	
 	public boolean addOrUpdateEvent(Event event);
 	
-	public Optional<Setting> retrieveSetting(@NonNull Settings setting);
+	public List<Setting> retrieveAllSettings();
+	
+	public Optional<Setting> retrieveSetting(@NonNull SettingKey setting);
 	
 	public List<Omega> retrieveAllOmegas();
 	

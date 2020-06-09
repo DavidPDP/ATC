@@ -18,6 +18,6 @@ public class UsersRemark {
 
 	private User user;
 	
-	private UsersTrack usersTrack;
+	private UserTrack usersTrack;
 
 }

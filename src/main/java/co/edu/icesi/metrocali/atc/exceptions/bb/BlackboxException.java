@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.exceptions;
+package co.edu.icesi.metrocali.atc.exceptions.bb;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;

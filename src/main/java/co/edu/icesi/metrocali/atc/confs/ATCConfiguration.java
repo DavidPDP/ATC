@@ -7,12 +7,20 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import co.edu.icesi.metrocali.atc.exceptions.bb.BlackboxExceptionHandler;
+
 @Configuration
 public class ATCConfiguration {
 
 	@Bean
 	public RestTemplate blackboxApi() {
-		return new RestTemplate();
+		
+		RestTemplate restTemplate = new RestTemplate();
+		//restTemplate.setErrorHandler(
+		//		new BlackboxExceptionHandler());
+		
+		return restTemplate;
+		
 	}
 	
 	@Bean

@@ -1,7 +1,7 @@
 package co.edu.icesi.metrocali.atc.constants;
 
 public class PermissionLevels {
-
+	
 	public static final String ADMIN = "Admin";
 	public static final String CONTROLLER = "Controller";
 	public static final String OMEGA = "Omega";

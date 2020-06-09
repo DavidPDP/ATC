@@ -1,34 +1,20 @@
 package co.edu.icesi.metrocali.atc.entities.operators;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
-import co.edu.icesi.metrocali.atc.entities.events.EventRemarks;
-import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
-import co.edu.icesi.metrocali.atc.entities.events.UsersRemark;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
 
 @JsonRootName("user")
-@Getter
-@Setter
+@Getter @Setter
 public class Controller extends User implements Comparable<Controller>{
 	
-	public Controller() {
-		this.workLoad = 0;
-	}
-	
-	private List<UsersRemark> userRemarks;
-	
-	private List<EventRemarks> eventRemarks;
-	
-	private List<EventTrack> eventTracks;
-	
+	private static final long serialVersionUID = -6288917867363076425L;
+
 	@JsonIgnore
-	private Integer workLoad;
+	private Integer workLoad = 0;
 	
 	public void increaseWorkLoad(int newWorkLoad) {
 		this.workLoad += newWorkLoad;

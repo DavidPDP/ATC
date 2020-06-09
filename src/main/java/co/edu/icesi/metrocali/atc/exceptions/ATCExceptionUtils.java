@@ -1,5 +1,7 @@
 package co.edu.icesi.metrocali.atc.exceptions;
 
+import java.util.UUID;
+
 import org.springframework.lang.Nullable;
 
 public abstract class ATCExceptionUtils {
@@ -57,6 +59,10 @@ public abstract class ATCExceptionUtils {
 	public static Throwable getMostSpecificCause(Throwable original) {
 		Throwable rootCause = getRootCause(original);
 		return (rootCause != null ? rootCause : original);
+	}
+	
+	public static String generateTicket() {
+		return UUID.randomUUID().toString();
 	}
 	
 }

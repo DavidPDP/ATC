@@ -20,7 +20,7 @@ public class State implements Recoverable{
 	@NonNull
 	private String name;
 	
-	private String stateTypeName;
+	private StateType stateType;
 	
 	private List<State> nextStates;
 	

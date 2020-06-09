@@ -9,12 +9,15 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.stereotype.Component;
+
 /**
  * Allows defining the protocol and policies of Cross-origin resource sharing (CORS).
  * which will be validated for each request made to the server. To customize the 
  * policies, it's recommended to review the good practices.
  * https://livebook.manning.com/book/cors-in-action/chapter-6/
  */
+@Component
 public class CORSFilter implements Filter{
 
 	@Override
@@ -31,6 +34,11 @@ public class CORSFilter implements Filter{
 				"X-Requested-With, Content-Type, Authorization, Origin, Accept, "
 				+ "Access-Control-Request-Method, Access-Control-Request-Headers");
 
+		for (String header : Httpresponse.getHeaderNames()) {
+			System.out.println("Header: " + header + "- Value: "
+					+ Httpresponse.getHeader(header));
+		}
+		
 		chain.doFilter(request, response);
 		
 	}

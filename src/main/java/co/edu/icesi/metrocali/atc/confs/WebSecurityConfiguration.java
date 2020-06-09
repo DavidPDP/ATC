@@ -49,11 +49,10 @@ public class WebSecurityConfiguration
     @Override
 	protected void configure(HttpSecurity http) throws Exception {
 		
-    	http.cors().and().csrf().disable()
+    	http.csrf().disable()
 		.authorizeRequests().antMatchers(
-				SecurityConstants.Controller_Login_Url,
-				SecurityConstants.Omega_Login_Url, 
-				SecurityConstants.Admin_Login_Url)
+			SecurityConstants.Login_Url
+		)
 		.permitAll()
         .anyRequest().authenticated().and()
         .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()

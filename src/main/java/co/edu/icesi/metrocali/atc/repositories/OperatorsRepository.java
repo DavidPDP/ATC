@@ -10,16 +10,18 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.dtos.InUserInfo;
+import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
-import co.edu.icesi.metrocali.atc.exceptions.BlackboxException;
+import co.edu.icesi.metrocali.atc.exceptions.bb.BlackboxException;
 
 /**
  * Represents a repository(DDD) that manages the Policies Context's entities.
@@ -44,18 +46,19 @@ public class OperatorsRepository {
 		this.blackboxApi = blackboxApi;
 		this.blackboxPoliciesApiURL = blackboxPoliciesApiURL;
 	}
-		
+	
+	//CRUD Operators ------------------------------
 	public Optional<User> retrieveOperator(String accountName) {
 		
 		try {
 			
-			Optional<User> operator = Optional.of(
+			User operator = 
 				blackboxApi.exchange(blackboxPoliciesApiURL 
-				+ "/users/accountName/" + accountName, 
-				HttpMethod.GET, null, User.class).getBody()
-			);
+				+ "/users/account_names/" + accountName, 
+				HttpMethod.GET, null, User.class
+			).getBody();
 			
-			return operator;
+			return Optional.ofNullable(operator);
 			
 		} catch (HttpServerErrorException e) {
 			throw new BlackboxException("blacbox don't respond.");
@@ -63,7 +66,13 @@ public class OperatorsRepository {
 		
 	}
 	
+	//---------------------------------------------
 	
+	public List<User> retrieveAllOperators() {
+		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users", 
+				HttpMethod.GET, null, 
+				new ParameterizedTypeReference<List<User>>() {}).getBody();
+	}
 	
 	/**
 	 * Retrieves all controllers regardless of whether they are 
@@ -71,7 +80,7 @@ public class OperatorsRepository {
 	 * @return List of all registered users.
 	 */
 	public List<Controller> retrieveAllControllers() {
-		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users/controllers", 
+		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users", 
 				HttpMethod.GET, null, 
 				new ParameterizedTypeReference<List<Controller>>() {}).getBody();
 	}
@@ -82,7 +91,7 @@ public class OperatorsRepository {
 	 * @return List of all registered users.
 	 */
 	public List<Omega> retrieveAllOmegas() {
-		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users/omegas", 
+		return blackboxApi.exchange(blackboxPoliciesApiURL + "/users", 
 				HttpMethod.GET, null, 
 				new ParameterizedTypeReference<List<Omega>>() {}).getBody();
 	}
@@ -121,7 +130,7 @@ public class OperatorsRepository {
 			
 			Optional<Controller> controller = Optional.of(
 				blackboxApi.exchange(blackboxPoliciesApiURL 
-				+ "/users/accountName/" + accountName, 
+				+ "/users/account_names/" + accountName, 
 				HttpMethod.GET, null, Controller.class).getBody()
 			);
 			
@@ -181,4 +190,15 @@ public class OperatorsRepository {
 			new ParameterizedTypeReference<List<Setting>>() {}).getBody();
 	}
 	
+	public List<UserTrack> retrieveUserTrackHistory(
+			@NonNull String accountName, @NonNull String interval) {
+		
+		return blackboxApi.exchange(
+			blackboxPoliciesApiURL + "/" + accountName + 
+				"/history/" + interval, 
+			HttpMethod.GET, null, 
+			new ParameterizedTypeReference<List<UserTrack>>() {}
+		).getBody();
+		
+	}
 }

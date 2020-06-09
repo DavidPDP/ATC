@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,6 +21,7 @@ import co.edu.icesi.metrocali.atc.constants.PermissionLevels;
 import co.edu.icesi.metrocali.atc.dtos.InEventMessage;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.entities.events.EventRemarks;
 import co.edu.icesi.metrocali.atc.entities.events.Step;
 import co.edu.icesi.metrocali.atc.services.entities.EventsService;
 
@@ -90,9 +90,10 @@ public class HTTPRestEventsAPI {
 	@PatchMapping("/rejected/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> rejectEvent(
 			@PathVariable("accountName") String accountName, 
-			@PathVariable("eventCode") String eventCode) {
+			@PathVariable("eventCode") String eventCode,
+			@RequestBody EventRemarks remark) {
 		try {
-			eventService.rejectEvent(accountName, eventCode);
+			eventService.rejectEvent(accountName, eventCode, remark);
 			return new ResponseEntity<>(HttpStatus.OK);
 		}catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -116,7 +117,8 @@ public class HTTPRestEventsAPI {
 	@PatchMapping("/on_holded/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> putOnHoldEvent(
 			@PathVariable("accountName") String accountName,
-			@PathVariable("eventCode") String eventCode){
+			@PathVariable("eventCode") String eventCode,
+			@RequestBody EventRemarks remark){
 		try {
 			eventService.completeEvent(accountName, eventCode);
 			return new ResponseEntity<>(HttpStatus.OK);
@@ -142,9 +144,10 @@ public class HTTPRestEventsAPI {
 	@PatchMapping("/send_back/{accountName}/{eventCode}")
 	public ResponseEntity<HttpStatus> sendBackEvent(
 			@PathVariable("accountName") String accountName, 
-			@PathVariable("eventCode") String eventCode) {
+			@PathVariable("eventCode") String eventCode,
+			@RequestBody EventRemarks remark) {
 		try {
-			eventService.sendBack(accountName, eventCode);
+			eventService.sendBack(accountName, eventCode, remark);
 			return new ResponseEntity<>(HttpStatus.OK);
 		}catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -225,18 +228,17 @@ public class HTTPRestEventsAPI {
 	}
 	//---------------------------------------------
 	
-	SecurityExpressionRoot a = null;
-	
 	//Update Priority Queue -----------------------
 	@PreAuthorize("hasRole('" + PermissionLevels.OMEGA + "')")
 	@PatchMapping("/{accountName}/{eventCode}/priority/{priority}")
 	public ResponseEntity<HttpStatus> updatePriority(
 			@RequestParam String accountName,
 			@RequestParam String eventCode,
-			@RequestParam int priority) {
+			@RequestParam int priority,
+			@RequestBody EventRemarks remark) {
 		try {
 			eventService.changePriority(accountName, eventCode, priority);
-			return new ResponseEntity<>(HttpStatus.OK);
+			return ResponseEntity.ok().build();
 		}catch (Exception e) {
 			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}

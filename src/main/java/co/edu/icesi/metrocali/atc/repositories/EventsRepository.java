@@ -20,7 +20,7 @@ import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.State;
-import co.edu.icesi.metrocali.atc.exceptions.BlackboxException;
+import co.edu.icesi.metrocali.atc.exceptions.bb.BlackboxException;
 
 /**
  * Represents repository pattern from the DDD approach. 

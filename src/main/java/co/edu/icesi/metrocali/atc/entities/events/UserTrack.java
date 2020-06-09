@@ -12,7 +12,7 @@ import lombok.Setter;
 @RequiredArgsConstructor
 @Getter
 @Setter
-public class UsersTrack {
+public class UserTrack {
 
 	private Integer id;
 
