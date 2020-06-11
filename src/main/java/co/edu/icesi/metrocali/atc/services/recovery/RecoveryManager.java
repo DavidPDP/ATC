@@ -1,98 +1,59 @@
 package co.edu.icesi.metrocali.atc.services.recovery;
 
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-
-import co.edu.icesi.metrocali.atc.constants.SettingKey;
-import co.edu.icesi.metrocali.atc.entities.policies.Setting;
-import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
-import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
-import co.edu.icesi.metrocali.atc.services.entities.EventsService;
-import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
-import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
 
 @Service
 public class RecoveryManager {
 	
-	private EventsService eventsService;
-	
-	private LocalRealtimeOperationStatus realtimeStatus;
-	
-	private OperatorsService operatorsService;
-	
-	private SettingsRepository settingsService;
-	
 	private List<RecoveryPoint> recoveryPoints;
 	
-	public RecoveryManager(EventsService eventsService,
-			LocalRealtimeOperationStatus realtimeStatus,
-			OperatorsService operatorsService,
-			SettingsRepository settingsService,
-			List<RecoveryPoint> recoveryPoints) {
+	private List<RecoveryService> recoveryServices;
+	
+	public RecoveryManager(
+			List<RecoveryPoint> recoveryPoints,
+			List<RecoveryService> recoveryServices) {
 		
-		this.eventsService = eventsService;
-		this.realtimeStatus = realtimeStatus;
-		this.operatorsService = operatorsService;
-		this.settingsService = settingsService;
 		this.recoveryPoints = recoveryPoints;
+		this.recoveryServices = recoveryServices;
 		
-	}
-	
-	private List<RecoveryPoint> retrieveRecoveryPoints(){
-		return recoveryPoints;
-	}
-	
-	public void loadSystemSettings() {
-		realtimeStatus.updateSettings(
-			settingsService.retrieveAll()
-		);
 	}
 	
 	public void recoveryRealTimeStatus(){
 		
-		Optional<Setting> recoverTime = 
-			realtimeStatus.retrieveSetting(SettingKey.Recover_Time);
+		sortByRecoveryPrecedence(recoveryServices);
 		
-		if(recoverTime.isPresent()) {
+		for (RecoveryService rs : recoveryServices) {
 			
-			//init recoverable entities -----------------
-			//TODO should check if they want to make everything dynamic.
-			HashMap<String, List<? extends Recoverable>> entities = 
-				new HashMap<>();
-			
-			entities.put("states", eventsService.retrieveAllStates());
-			
-			entities.put("categories", 
-				eventsService.retrieveAllCategories(false));
-			
-			entities.put("controllers", 
-				operatorsService.retrieveOnlineControllers());
-			
-			entities.put("events",
-				eventsService.retrieveLastEvents(
-					(String) recoverTime.get().getValue()
-				)
+			recoveryPoints.forEach(
+				rp -> rp.recoverypoint(
+					rs.getType(), rs.recoveryEntities())
 			);
-			//-------------------------------------------
 			
-			//Run recovery points -----------------------
-			List<RecoveryPoint> recoveryPoints = 
-					retrieveRecoveryPoints();
-			
-			for (RecoveryPoint recoveryPoint : recoveryPoints) {
-				System.out.println(recoveryPoint.getClass().getName());
-				recoveryPoint.recoverypoint(entities);
-			}
-			//-------------------------------------------
-			
-		}else {
-			throw new ATCRuntimeException("the setting Recover_Time"
-					+ " was not found.");
-		}		
+		}	
 		
 	}
 	
+	
+	private void sortByRecoveryPrecedence(
+		List<RecoveryService> recoveryServices) {
+		
+		Comparator<RecoveryService> precedenceComparator = 
+			new Comparator<RecoveryService>() {
+			
+			@Override
+			public int compare(
+				RecoveryService rs1, RecoveryService rs2) {
+				return 
+					rs1.getRecoveryPrecedence().getLevel() 
+						- rs2.getRecoveryPrecedence().getLevel();
+			}
+			
+		};
+		
+		recoveryServices.sort(precedenceComparator);
+		
+	}
 }

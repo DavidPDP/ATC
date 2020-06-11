@@ -5,9 +5,11 @@ package co.edu.icesi.metrocali.atc.constants;
  * For more information, check the status flow of the event.
  * @author <a href="mailto:johan.ballesteros@outlook.com">Johan Ballesteros</a>
  */
-public enum EventStates {
+public enum StateValue {
 	
-	Created, Pending, Assigned, Accepted, In_Proccess, On_Hold,
-	Rejected, Solved, Verification, Archived, Validated, Send_Back
+	Pending, Assigned, In_Proccess, On_Hold,
+	Verification, Archived,
+	
+	Available, Busy, Unavailable, Offline
 	
 }

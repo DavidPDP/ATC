@@ -6,10 +6,10 @@ import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
-public class UsersRemark {
+@Getter @Setter
+public class UserRemark {
 
+	//Attributes -----------------------------------
 	private Long id;
 
 	private String content;
@@ -18,6 +18,7 @@ public class UsersRemark {
 
 	private User user;
 	
-	private UserTrack usersTrack;
+	private UserTrack userTrack;
+	//----------------------------------------------
 
 }

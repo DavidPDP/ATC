@@ -1,55 +1,82 @@
 package co.edu.icesi.metrocali.atc.services.entities;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
-import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
-import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
+import co.edu.icesi.metrocali.atc.services.recovery.RecoveryService;
 
 @Service
-public class CategoriesService {
+public class CategoriesService implements RecoveryService {
 	
-	private EventsRepository categoriesRepository;
+	private CategoriesRepository categoriesRepository;
 	
-	private CategoriesRepository catego;
+	private RealtimeOperationStatus realtimeOperationStatus;
 	
-	private LocalRealtimeOperationStatus realtimeOperationStatus;
-	
-	@Autowired
-	public CategoriesService(EventsRepository categoriesRepository,
-			LocalRealtimeOperationStatus realtimeOperationStatus,
-			CategoriesRepository catego) {
+	public CategoriesService(CategoriesRepository categoriesRepository,
+			RealtimeOperationStatus realtimeOperationStatus) {
+		
 		this.categoriesRepository = categoriesRepository;
 		this.realtimeOperationStatus = realtimeOperationStatus;
-		this.catego = catego;
+		
 	}
 	
+	@Override
+	public Class<? extends Recoverable> getType() {
+		return Category.class;
+	}
+	
+	@Override
+	public RecoveryPrecedence getRecoveryPrecedence() {
+		return RecoveryPrecedence.Second;
+	}
+
+	@Override
+	public List<Recoverable> recoveryEntities() {
+		
+		List<Category> categories = 
+			categoriesRepository.retrieveAll();
+		
+		return new ArrayList<Recoverable>(categories);
+		
+	}
+	
+	//CRUD -----------------------------------------
 	/**
 	 * Retrieves all categories with shallow/deep copy strategy.
 	 * @param shallow the strategy 
 	 * @return List
 	 */
-	public List<Category> retrieveAllCategories(boolean shallow){
-		List<Category> categories = null;
+	public List<Category> retrieveAll(boolean shallow){
+		
+		List<Category> categories = Collections.emptyList();
 		
 		if(shallow) {
 			categories = realtimeOperationStatus.retrieveAllCategories();
 		}else {
-			categories = categoriesRepository.retrieveAllCategories();
+			categories = categoriesRepository.retrieveAll();
 		}
 		
 		if(categories.isEmpty()) {
-			throw new NoSuchElementException();
-		}else {
-			return categories;
+			
+			throw new ATCRuntimeException("No categories found", 
+				new NoSuchElementException()
+			);
+			
 		}
+		
+		return categories;
+		
 	}
 	
 	/**
@@ -57,33 +84,39 @@ public class CategoriesService {
 	 * @param name the category's business identifier.
 	 * @return {@link Category} with the specific category searched.
 	 */
-	public Category retrieveCategory(@NonNull String name) {
+	public Category retrieve(String name) {
+		
 		Optional<Category> category = 
 				realtimeOperationStatus.retrieveCategory(name);
+		
 		if(category.isPresent()) {
 			//shallow copy
 			return category.get();
 		}else {
 			//deep copy
-			category = categoriesRepository.retrieveCategory(name);
-			if(category.isPresent()) {
-				return category.get();
-			}else {
-				throw new NoSuchElementException();
-			}
+			return categoriesRepository.retrieve(name);
 		}
 	}
 	
-	public void create(@NonNull Category category) {
-		catego.save(category);
+	public void save(Category category) {
+		
+		Category persistedCategory = 
+				categoriesRepository.save(category);
+		
+		//Update operation state
+		realtimeOperationStatus
+			.addOrUpdateCategory(persistedCategory);
+		
 	}
 	
-	public Category update(@NonNull Category category) {
-		catego.save(category);
-		return category;
+	public void delete(String name) {
+		
+		//Update operation state
+		realtimeOperationStatus.removeCategory(name);
+		
+		categoriesRepository.delete(name);
+		
 	}
-	
-	public void delete(@NonNull String name) {
-		catego.delete(name);
-	}
+	//----------------------------------------------
+
 }

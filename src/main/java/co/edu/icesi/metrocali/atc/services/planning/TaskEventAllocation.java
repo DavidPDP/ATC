@@ -39,7 +39,9 @@ public class TaskEventAllocation extends TimerTask
 			System.out.println(event);
 			User controller = resourcePlanning.getNextAvailableController();
 			
-			eventsService.assignEvent(event, controller.getAccountName());
+			eventsService.assignEvent(
+				event, controller.getAccountName(), false
+			);
 			System.out.println("Allocation-----------");
 		}
 		

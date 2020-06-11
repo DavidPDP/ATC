@@ -1,5 +1,7 @@
 package co.edu.icesi.metrocali.atc.services.entities;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -9,74 +11,110 @@ import java.util.regex.Pattern;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
-import co.edu.icesi.metrocali.atc.exceptions.bb.ExternalApiResponseException;
 import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
+import co.edu.icesi.metrocali.atc.services.recovery.RecoveryService;
 
 @Service
-public class SettingsService {
+public class SettingsService implements RecoveryService {
 
 	private SettingsRepository settingsRepository;
 	
-	private RealtimeOperationStatus realtimeOpStatus;
+	private RealtimeOperationStatus realtimeOperationStatus;
 	
 	public SettingsService(
-			RealtimeOperationStatus realtimeOpStatus,
+			RealtimeOperationStatus realtimeOperationStatus,
 			SettingsRepository settingsRepository) {
 		
-		this.realtimeOpStatus = realtimeOpStatus;
+		this.realtimeOperationStatus = realtimeOperationStatus;
 		this.settingsRepository = settingsRepository;
 		
 	}
 	
+	@Override
+	public Class<? extends Recoverable> getType(){
+		return Setting.class;
+	}
+	
+	@Override
+	public RecoveryPrecedence getRecoveryPrecedence() {
+		return RecoveryPrecedence.First;
+	}
+
+	@Override
+	public List<Recoverable> recoveryEntities() {
+		
+		List<Setting> settings = 
+			settingsRepository.retrieveAll();
+		
+		return new ArrayList<Recoverable>(settings);
+		
+	}
+	
+	//CRUD -----------------------------------------
 	public List<Setting> retrieveAll(boolean shallow) {
 		
-		List<Setting> settings = null;
+		List<Setting> settings = Collections.emptyList();
 		
 		if(shallow) {
-			settings = realtimeOpStatus.retrieveAllSettings();
+			settings = realtimeOperationStatus.retrieveAllSettings();
 		}else {
 			settings = settingsRepository.retrieveAll();
 		}
 		
-		if(settings == null || settings.isEmpty()) {
+		if(settings.isEmpty()) {
+			
 			throw new ATCRuntimeException("No settings found.",
-				new NoSuchElementException());
+				new NoSuchElementException()
+			);
+			
 		}
 		
 		return settings;
 		
 	}
 	
-	public Setting retrieve(@NonNull SettingKey key) {
+	public Setting retrieve(SettingKey key) {
 		
 		Optional<Setting> setting = 
-				realtimeOpStatus.retrieveSetting(key);
+				realtimeOperationStatus.retrieveSetting(key);
 		
 		if(setting.isPresent()) {
 			//Shallow strategy
 			return setting.get();
 		}else {
 			//Deep strategy
-			setting = settingsRepository.retrieve(key.name());
-			
-			if(setting.isPresent()) {
-				return setting.get();
-			}else {
-				throw new ATCRuntimeException(
-					key + "setting doesn't exist.", 
-					new NoSuchElementException()
-				);
-			}
-			
+			return settingsRepository.retrieve(key.name());			
 		}
 		
 	}
+	
+	public void save(Setting setting) {
+		
+		Setting persistedSetting = settingsRepository.save(setting);
+		
+		//Update operation status
+		realtimeOperationStatus.addOrUpdateSetting(persistedSetting);
+		
+	}
+	
+	public void delete(String key) {
 
-	public boolean isValidValue(@NonNull SettingKey key, 
+		//Update operation status
+		realtimeOperationStatus.removeSetting(key);
+		
+		settingsRepository.delete(key);
+
+	}
+	//----------------------------------------------
+	
+	//Business methods -----------------------------
+	public boolean isValidValue(SettingKey key, 
 			@NonNull String value) {
 		
 		boolean isValid = false;
@@ -92,7 +130,7 @@ public class SettingsService {
 		
 	}
 
-	private String resolveGroup(@NonNull String type) {
+	private String resolveGroup(String type) {
 		
 		String group = "";
 		
@@ -112,7 +150,7 @@ public class SettingsService {
 	}
 	
 	private boolean isValidInterval(
-			@NonNull String limit, @NonNull String value) {
+			String limit, String value) {
 
 		float valueMin = convertIntervalInMinutes(value);
 		float limitMin = convertIntervalInMinutes(limit);
@@ -158,26 +196,6 @@ public class SettingsService {
 		}
 
 	}
-	
-	public void save(@NonNull Setting setting) {
-		
-		try {
-			settingsRepository.save(setting);
-		}catch (ExternalApiResponseException e) {
-			throw new ATCRuntimeException(
-				"could not save setting.", e);
-		}
-		
-	}
-	
-	public void delete(@NonNull String key) {
-		try {
-			settingsRepository.delete(key);
-		}catch (ExternalApiResponseException e) {
-			throw new ATCRuntimeException(
-				"could not delete setting.", e);
-		}
-	}
-	
-	
+	//----------------------------------------------
+
 }

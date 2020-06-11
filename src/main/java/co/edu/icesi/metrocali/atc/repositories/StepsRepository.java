@@ -11,70 +11,69 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
-import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.entities.events.Step;
 
 @Repository
-public class CategoriesRepository {
+public class StepsRepository {
 
 	private RestTemplate blackboxApi;
 	
 	private String blackboxEventManagmentApiURL;
 	
-	public CategoriesRepository(
+	public StepsRepository(
 		@Qualifier("blackboxApi") RestTemplate blackboxApi,
 		@Value("${blackbox.apis.event_managment}") 
-			String blackboxEventManagmentApiURL) {
+		String blackboxEventManagmentApiURL) {
 		
 		this.blackboxApi = blackboxApi;
-		this.blackboxEventManagmentApiURL = 
-				blackboxEventManagmentApiURL;
+		this.blackboxEventManagmentApiURL = blackboxEventManagmentApiURL;
 		
 	}
-	
-	public List<Category> retrieveAll() {
 		
-		List<Category> categories = 
+	public List<Step> retrieveAll() {
+				
+		List<Step> steps = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories", 
+				blackboxEventManagmentApiURL + "/steps", 
 				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Category>>() {}
+				new ParameterizedTypeReference<List<Step>>() {}
 			).getBody();
 			
-		return categories;
+		return steps;
 		
 	}
 	
-	public Category retrieve(String name) {
+	public Step retrieve(String name) {
 		
-		Category category = 
+		Step step = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories/" + name,
-				HttpMethod.GET, null, Category.class
+				blackboxEventManagmentApiURL + "/steps/" + name,
+				HttpMethod.GET, null, Step.class
 			).getBody();
 		
-		return category;
+		return step;
 		
 	}
 	
-	public Category save(Category category) {
-
-		HttpEntity<Category> requestBody = 
-				new HttpEntity<>(category);
+	public Step save(Step step) {
 		
-		Category persistedCategory = 
+		HttpEntity<Step> requestBody = 
+				new HttpEntity<>(step);
+		
+		Step persistedStep = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories",
-				HttpMethod.POST, requestBody, Category.class
+				blackboxEventManagmentApiURL + "/steps",
+				HttpMethod.POST, requestBody, Step.class
 			).getBody();
 		
-		return persistedCategory;
+		return persistedStep;
 		
 	}
 	
-	public void delete(String name) {
+	public void delete(String description) {
 		
 		blackboxApi.exchange(
-			blackboxEventManagmentApiURL + "/categories" + name,
+			blackboxEventManagmentApiURL + "/steps" + description,
 			HttpMethod.DELETE, null, HttpStatus.class
 		).getBody();
 			

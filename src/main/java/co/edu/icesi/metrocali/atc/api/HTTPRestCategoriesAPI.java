@@ -2,12 +2,14 @@ package co.edu.icesi.metrocali.atc.api;
 
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,16 +35,12 @@ public class HTTPRestCategoriesAPI {
 	}
 	
 	//CRUD -------------------------------
-	@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "') "
-		+ "|| hasRole('" + PermissionLevel.OMEGA + "') "
-		+ "|| hasRole('" + PermissionLevel.CONTROLLER + "') "
-	)
 	@GetMapping
 	public ResponseEntity<List<Category>> retrieveAll(
-			@RequestParam Boolean current) {
+			@RequestParam @NonNull Boolean current) {
 		
 		List<Category> categories = 
-				categoriesService.retrieveAllCategories(current);
+				categoriesService.retrieveAll(current);
 		return ResponseEntity.ok(categories);
 		
 	}
@@ -52,27 +50,17 @@ public class HTTPRestCategoriesAPI {
 			@PathVariable String name) {
 		
 		Category category = 
-				categoriesService.retrieveCategory(name);
+				categoriesService.retrieve(name);
 		return ResponseEntity.ok(category);
 		
 	}
 	
 	@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "')")
 	@PostMapping
-	public ResponseEntity<HttpStatus> create(
-			@RequestBody Category category) {
+	public ResponseEntity<HttpStatus> save(
+			@RequestBody @NonNull Category category) {
 		
-		categoriesService.create(category);
-		return ResponseEntity.ok().build();
-		
-	}
-	
-	@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "')")
-	@PatchMapping
-	public ResponseEntity<HttpStatus> update(
-			@RequestBody Category category) {
-		
-		categoriesService.update(category);
+		categoriesService.save(category);
 		return ResponseEntity.ok().build();
 		
 	}
@@ -80,7 +68,7 @@ public class HTTPRestCategoriesAPI {
 	@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "')")
 	@DeleteMapping("/{name}")
 	public ResponseEntity<HttpStatus> delete(
-			@PathVariable String name) {
+			@PathVariable @NotBlank String name) {
 		
 		categoriesService.delete(name);
 		return ResponseEntity.ok().build();

@@ -12,15 +12,16 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
-import co.edu.icesi.metrocali.atc.constants.StateType;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.Protocol;
 import co.edu.icesi.metrocali.atc.entities.events.State;
+import co.edu.icesi.metrocali.atc.entities.events.Step;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
+import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
@@ -38,7 +39,6 @@ public class LocalRealtimeOperationStatus
 	implements RealtimeOperationStatus, RecoveryPoint {
 	
 	//Operators -----------------------------
-	
 	/**
 	 * It stores the operators that sign-in the system.
 	 * Data is temporary while authentication completes.
@@ -64,13 +64,15 @@ public class LocalRealtimeOperationStatus
 	//---------------------------------------
 	
 	//Static entities -----------------------
-	private Map<String, State> operatorStates;
-
-	private Map<String, State> eventStates;
+	private Map<String, State> states;
 	
 	private Map<String, Category> categories;
 	
+	private Map<String, Step> steps;
+	
 	private Map<String, Setting> settings;
+	
+	private Map<String, Role> roles;
 	//---------------------------------------
 	
 	public LocalRealtimeOperationStatus() {
@@ -89,89 +91,59 @@ public class LocalRealtimeOperationStatus
 		operatorTracks = new HashMap<>();
 		controllerEventTracks = new HashMap<>();
 		
-		operatorStates = new HashMap<>();
-		eventStates = new HashMap<>();
+		states = new HashMap<>();
 		categories = new HashMap<>();
 		settings = new HashMap<>();
+		roles = new HashMap<>();
 		
 	}
 	
 	//Recover Methods --------------------------------
 	@Override
-	public void recoverypoint(Map<String,
-			List<? extends Recoverable>> entities) {
+	public <T extends Recoverable> void recoverypoint(
+			Class<T> type, List<Recoverable> entities) {
+		
+		Map<String, T> entityCollection = resolve(type);
+	
+		entityCollection.clear();
 
-		recoverStates(entities.get("states"));
-		recoverCategories(entities.get("categories"));
-		recoverControllers(entities.get("controllers"));
-		recoverEvents(entities.get("events"));
-		recoverOperatorsTracks(entities.get("operatorTracks"));
-		recoverEventTracks(entities.get("operatorTracks"));
-		
-	}
-	
-	private void recoverStates(List<? extends Recoverable> states) {
-		
-		this.operatorStates.clear();
-		this.eventStates.clear();
-		
-		for (Recoverable recoverableState : states) {
-			State state = (State) recoverableState;
-			if(state.getStateType().getName().equals(StateType.Users.name())) {
-				this.operatorStates.put(state.getName(), state);
-			}else {
-				this.eventStates.put(state.getName(), state);
-			}
+		for (Recoverable recoverable : entities) {
+			
+			entityCollection.put(
+				recoverable.getKeyEntity(), 
+				type.cast(recoverable)
+			);
+			
 		}
 		
 	}
 	
-	private void recoverCategories(List<? extends Recoverable> categories) {
-		System.out.println("ENTRAAA");
-		this.categories.clear();
+	@SuppressWarnings("unchecked")
+	private <T> Map<String, T> resolve(Class<T> type) {
 		
-		for (Recoverable recoverableCategory : categories) {
-			Category category = (Category) recoverableCategory;
-			this.categories.put(category.getName(), category);
+		Map<String, T> entityCollection = 
+			Collections.emptyMap();
+		
+		if(type.getName().equals(Setting.class.getName())) {
+			entityCollection = (Map<String, T>) settings;
+		}else if(type.getName().equals(Event.class.getName())) {
+			entityCollection = (Map<String, T>) events;
+		}else if(type.getName().equals(Category.class.getName())) {
+			entityCollection = (Map<String, T>) categories;
+		}else if(type.getName().equals(State.class.getName())) {
+			entityCollection = (Map<String, T>) states;
 		}
 		
-	}
-	
-	private void recoverControllers(
-			List<? extends Recoverable> controllers) {
-		
-		this.controllers.clear();
-		
-		for (Recoverable recoverableController : controllers) {
-			Controller controller = (Controller) recoverableController;
-			this.controllers.put(controller.getAccountName(), controller);
-		}
+		return entityCollection;
 		
 	}
-	
-	private void recoverEvents(List<? extends Recoverable> events) {
-//		for (Recoverable recoverableEvent : events) {
-//			Event event = (Event) recoverableEvent;
-//			this.events.put(event.getCode(), event);
-//		}
-	}
-	
-	private void recoverOperatorsTracks(
-			List<? extends Recoverable> operatorsTracks) {
-//		for (Recoverable recoverableEvent : operatorsTracks) {
-//			//UserTrack userTrack = (Event) recoverableEvent;
-//			//this.events.put(event.getCode(), event);
-//		}
-	}
-	
-	private void recoverEventTracks(
-			List<? extends Recoverable> operatorsTracks) {
-		
-	}
-	
 	//------------------------------------------------
 		
 	//Add and update operation status methods --------
+	
+	
+	
+	
 	@Override
 	public void assignEvent(Event event, String accountName) {
 		controllersEvents.computeIfAbsent(accountName, 
@@ -192,15 +164,12 @@ public class LocalRealtimeOperationStatus
 	@Override
 	public void updateStates(List<State> states) {
 		
-		this.operatorStates.clear();
-		this.eventStates.clear();
+		this.states.clear();
 		
 		for (State state : states) {
-			if(state.getStateType().getName().equals(StateType.Users.name())) {
-				this.operatorStates.put(state.getName(), state);
-			}else {
-				this.eventStates.put(state.getName(), state);
-			}
+			
+			this.states.put(state.getName(), state);
+
 		}
 		
 	}
@@ -224,6 +193,37 @@ public class LocalRealtimeOperationStatus
 		operators.remove(accountName);
 	}
 	
+	public List<Role> retrieveRoles(){
+		return new ArrayList<>(roles.values());
+	}
+	
+	public void persistRole(Role role) {
+		roles.put(role.getName(), role);
+	}
+	
+	public void removeRole(String name) {
+		roles.remove(name);
+	}
+	
+//	public List<?> retrieve(Class<?> type) {
+//		
+//		Map<?,?> entityMap = resolveType(type);
+//		
+//		return new ArrayList<>(entityMap.values());
+//		
+//	}
+//		
+//	private Map<?,?> resolveType(Class<?> type) {
+//		
+//		Map<?,?> entityMap = Collections.emptyMap();
+//		
+//		if(type.isInstance(Role.class)) {
+//			entityMap = roles;
+//		}
+//		
+//		return entityMap;
+//	}
+	
 	@Override
 	public boolean addOrUpdateController(Controller controller) {
 		controllers.put(controller.getAccountName(), controller);
@@ -242,6 +242,18 @@ public class LocalRealtimeOperationStatus
 		omegas.remove(accountName);
 	}
 	
+	public void removeCategory(String name) {
+		categories.remove(name);
+	}
+	
+	public void removeSetting(String key) {
+		settings.remove(key);
+	}
+	
+	public void addOrUpdateSetting(Setting setting) {
+		settings.put(setting.getKey(), setting);
+	}
+	
 	@Override
 	public boolean addOrUpdateCategory(Category category) {
 		categories.put(category.getName(), category);
@@ -249,14 +261,8 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	@Override
-	public boolean addOrUpdateEventState(State state) {
-		eventStates.put(state.getName(), state);
-		return true;
-	}
-	
-	@Override
-	public boolean addOrUpdateUserState(State state) {
-		operatorStates.put(state.getName(), state);
+	public boolean addOrUpdateState(State state) {
+		states.put(state.getName(), state);
 		return true;
 	}
 	
@@ -305,8 +311,8 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	@Override
-	public Event retrieveEvent(String eventCode) {
-		return events.get(eventCode);
+	public Optional<Event> retrieveEvent(String eventCode) {
+		return Optional.ofNullable(events.get(eventCode));
 	}
 	
 	@Override
@@ -329,11 +335,11 @@ public class LocalRealtimeOperationStatus
 	 * @return {@link List} with all loaded user states.
 	 */
 	@Override
-	public List<State> retrieveAllUserStates() {
-		if(operatorStates.isEmpty()) {
+	public List<State> retrieveAllStates() {
+		if(states.isEmpty()) {
 			return Collections.emptyList();
 		}else {
-			return new ArrayList<State>(operatorStates.values());
+			return new ArrayList<State>(states.values());
 		}
 	}
 	
@@ -343,31 +349,8 @@ public class LocalRealtimeOperationStatus
 	 * @return {@link Optional} with the specific user state searched.
 	 */
 	@Override
-	public Optional<State> retrieveUserState(String name) {
-		return Optional.of(operatorStates.get(name));
-	}
-	
-	/**
-	 * Retrieves all loaded event states.
-	 * @return {@link List} with all loaded event states.
-	 */
-	@Override
-	public List<State> retrieveAllEventStates() {
-		if(eventStates.isEmpty()) {
-			return Collections.emptyList();
-		}else {
-			return new ArrayList<State>(eventStates.values());
-		}
-	}
-	
-	/**
-	 * Retrieves a specific event state that previously loaded.
-	 * @param name the event state's business identifier.
-	 * @return {@link Optional} with the specific event state searched.
-	 */
-	@Override
-	public Optional<State> retrieveEventState(@NonNull String name) {
-		return Optional.of(eventStates.get(name));
+	public Optional<State> retrieveState(String name) {
+		return Optional.of(states.get(name));
 	}
 	
 	/**
@@ -405,6 +388,10 @@ public class LocalRealtimeOperationStatus
 				.filter(p -> p.getStep().getDescription().equals(stepName))
 				.findAny();
 		
+	}
+	
+	public List<Step> retrieveAllSteps() {
+		return new ArrayList<>(steps.values());
 	}
 	
 	//------------------------------------------------

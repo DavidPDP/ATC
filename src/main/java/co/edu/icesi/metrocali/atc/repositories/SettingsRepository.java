@@ -1,7 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,7 +8,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,31 +41,37 @@ public class SettingsRepository {
 		
 	}
 	
-	public Optional<Setting> retrieve(@NonNull String key) {
+	public Setting retrieve(String key) {
 		
 		Setting setting = 
-			blackboxApi.exchange(blackboxPoliciesApiURL + "/settings/"
-			+ key, HttpMethod.GET, null, Setting.class
-		).getBody();
+			blackboxApi.exchange(
+				blackboxPoliciesApiURL + "/settings/" + key, 
+				HttpMethod.GET, null, Setting.class
+			).getBody();
 		
-		return Optional.ofNullable(setting);
+		return setting;
 		
 	}
 	
-	public void save(@NonNull Setting setting) {
+	public Setting save(Setting setting) {
 			
 		HttpEntity<Setting> bodyRequest = new HttpEntity<>(setting);
 		
-		blackboxApi.exchange(blackboxPoliciesApiURL + "/settings", 
-			HttpMethod.POST, bodyRequest, HttpStatus.class
-		).getBody();
+		Setting persistedSetting = 
+			blackboxApi.exchange(
+				blackboxPoliciesApiURL + "/settings", 
+				HttpMethod.POST, bodyRequest, Setting.class
+			).getBody();
+		
+		return persistedSetting;
 		
 	}
 	
-	public void delete(@NonNull String key) {
+	public void delete(String key) {
 			
-		blackboxApi.exchange(blackboxPoliciesApiURL + "/settings/"
-			+ key, HttpMethod.DELETE, null, HttpStatus.class
+		blackboxApi.exchange(
+			blackboxPoliciesApiURL + "/settings/" + key, 
+			HttpMethod.DELETE, null, HttpStatus.class
 		).getBody();
 			
 	}

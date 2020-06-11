@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter @Setter
 public class Setting implements Recoverable{
 
+	//Attributes -----------------------------------
 	private Integer id;
 
 	private Timestamp creation;
@@ -20,5 +21,11 @@ public class Setting implements Recoverable{
 	private String value;
 
 	private String version;
+	//----------------------------------------------
+
+	@Override
+	public String getKeyEntity() {
+		return this.key;
+	}
 	
 }

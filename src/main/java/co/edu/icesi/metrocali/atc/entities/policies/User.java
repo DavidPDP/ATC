@@ -25,6 +25,7 @@ public class User implements UserDetails,
  	
 	private static final long serialVersionUID = -4730778099134900170L;
 
+	//Attributes -----------------------------------
 	private Integer id;
 
 	private String accountName;
@@ -37,9 +38,13 @@ public class User implements UserDetails,
 
 	@JsonInclude(value=Include.NON_EMPTY)
 	private String password;
+	//----------------------------------------------
 	
+	//Aggregates -----------------------------------
 	private List<Role> roles;
+	//----------------------------------------------
 
+	//Security methods------------------------------
 	@Override
 	@JsonIgnore
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -92,6 +97,13 @@ public class User implements UserDetails,
 		this.password = null;
 	}
 	
+	@Override
+	public String getKeyEntity() {
+		return this.accountName;
+	}
+	//----------------------------------------------
+	
+	//Business methods -----------------------------
 	/**
 	 * Responsible for init a user's mandatory information. 
 	 * This is useful for dynamism of instantiating concrete/child 
@@ -114,5 +126,6 @@ public class User implements UserDetails,
 		setPassword(user.getPassword());
 		setRoles(user.getRoles());
 	}
+	//----------------------------------------------
 	
 }

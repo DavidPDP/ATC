@@ -9,4 +9,7 @@ package co.edu.icesi.metrocali.atc.services.recovery;
  * its state will be recovered. This applies to system crashes.
  */
 public interface Recoverable {
+	
+	public String getKeyEntity();
+	
 }

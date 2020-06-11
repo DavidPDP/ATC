@@ -1,36 +1,41 @@
 package co.edu.icesi.metrocali.atc.entities.events;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 
 @Getter @Setter
 public class Category implements Recoverable{
 	
+	//Attributes -----------------------------------
 	private Integer id;
 
-	@JsonProperty("base_priority")
 	private Integer basePriority;
 	
-	@NonNull
 	private String name;
 	
 	private Category category;
+	//----------------------------------------------
 
-	@JsonProperty("protocols")
-	private List<Protocol> protocols;
-
-	
-	public void merge(Category category) {
-		
-		if(this.id == null) {
-			this.id = category.getId();
-		}
-		
+	@Override
+	public String getKeyEntity() {
+		return this.name;
 	}
+	
+	//Aggregates -----------------------------------
+	@JsonProperty("protocols")
+	private List<Protocol> protocols = new ArrayList<>();
+	//----------------------------------------------
+
+	//Aggregates methods ---------------------------
+	public void addProtocol(Protocol protocol) {
+		this.protocols.add(protocol);
+	}
+	//----------------------------------------------
+	
 }

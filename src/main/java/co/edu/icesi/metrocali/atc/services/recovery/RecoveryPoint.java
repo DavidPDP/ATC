@@ -1,11 +1,11 @@
 package co.edu.icesi.metrocali.atc.services.recovery;
 
 import java.util.List;
-import java.util.Map;
 
 public interface RecoveryPoint {
 
-	public void recoverypoint(Map<String,
-			List<? extends Recoverable>> entities);
+	public <T extends Recoverable> void recoverypoint(Class<T> type, 
+			List<Recoverable> entities
+	);
 	
 }

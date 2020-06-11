@@ -1,18 +1,21 @@
 package co.edu.icesi.metrocali.atc.entities.events;
 
+import java.sql.Timestamp;
+
+import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class ProtocolTrack {
+public class EventRemark {
 
 	//Constructors ---------------------------------
-	public ProtocolTrack() {}
+	public EventRemark() {}
 	
-	public ProtocolTrack(Boolean done, Protocol protocol) {
+	public EventRemark(String content, User user) {
 		
-		this.done = done;
-		this.protocol = protocol;
+		this.content = content;
+		this.user = user;
 		
 	}
 	//----------------------------------------------
@@ -20,9 +23,13 @@ public class ProtocolTrack {
 	//Attributes -----------------------------------
 	private Long id;
 	
-	private Boolean done;
-	
-	private Protocol protocol;
+	private String code;
+
+	private String content;
+
+	private Timestamp creation;
+
+	private User user;
 	//----------------------------------------------
 	
 }

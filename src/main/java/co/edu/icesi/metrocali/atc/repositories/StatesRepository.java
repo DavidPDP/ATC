@@ -11,70 +11,69 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
-import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.entities.events.State;
 
 @Repository
-public class CategoriesRepository {
+public class StatesRepository {
 
 	private RestTemplate blackboxApi;
 	
 	private String blackboxEventManagmentApiURL;
 	
-	public CategoriesRepository(
+	public StatesRepository(
 		@Qualifier("blackboxApi") RestTemplate blackboxApi,
 		@Value("${blackbox.apis.event_managment}") 
-			String blackboxEventManagmentApiURL) {
+		String blackboxEventManagmentApiURL) {
 		
 		this.blackboxApi = blackboxApi;
-		this.blackboxEventManagmentApiURL = 
-				blackboxEventManagmentApiURL;
+		this.blackboxEventManagmentApiURL = blackboxEventManagmentApiURL;
 		
 	}
-	
-	public List<Category> retrieveAll() {
 		
-		List<Category> categories = 
+	public List<State> retrieveAll() {
+				
+		List<State> state = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories", 
+				blackboxEventManagmentApiURL + "/states", 
 				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Category>>() {}
+				new ParameterizedTypeReference<List<State>>() {}
 			).getBody();
 			
-		return categories;
+		return state;
 		
 	}
 	
-	public Category retrieve(String name) {
+	public State retrieve(String name) {
 		
-		Category category = 
+		State state = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories/" + name,
-				HttpMethod.GET, null, Category.class
+				blackboxEventManagmentApiURL + "/states/" + name,
+				HttpMethod.GET, null, State.class
 			).getBody();
 		
-		return category;
+		return state;
 		
 	}
 	
-	public Category save(Category category) {
-
-		HttpEntity<Category> requestBody = 
-				new HttpEntity<>(category);
+	public State save(State state) {
 		
-		Category persistedCategory = 
+		HttpEntity<State> requestBody = 
+				new HttpEntity<>(state);
+		
+		State persistedState = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories",
-				HttpMethod.POST, requestBody, Category.class
+				blackboxEventManagmentApiURL + "/states",
+				HttpMethod.POST, requestBody, State.class
 			).getBody();
 		
-		return persistedCategory;
+		return persistedState;
 		
 	}
 	
 	public void delete(String name) {
 		
 		blackboxApi.exchange(
-			blackboxEventManagmentApiURL + "/categories" + name,
+			blackboxEventManagmentApiURL + "/states" + name,
 			HttpMethod.DELETE, null, HttpStatus.class
 		).getBody();
 			

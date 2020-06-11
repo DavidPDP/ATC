@@ -16,17 +16,18 @@ public class AtcApplication {
 	public static void main(String[] args) {
 		
 		ConfigurableApplicationContext context = 
-				SpringApplication.run(AtcApplication.class, args);
+			SpringApplication.run(AtcApplication.class, args);
 		
 		//Recovery State
-		RecoveryManager recoveryPoint = context.getBean(RecoveryManager.class);
-		recoveryPoint.loadSystemSettings();
+		RecoveryManager recoveryPoint = 
+			context.getBean(RecoveryManager.class);
 		recoveryPoint.recoveryRealTimeStatus();
 		context.getBeanFactory().destroyBean(recoveryPoint);
 		//--------------
 		
 		//Timer Task
-		EventAllocation task = context.getBean(EventAllocation.class);
+		EventAllocation task = 
+			context.getBean(EventAllocation.class);
 		new Timer().schedule((TimerTask) task, 0, 5000);
 		//--------------
 		

@@ -50,7 +50,8 @@ public class OperatorsService implements UserDetailsService{
 	
 	private BCryptPasswordEncoder bcryptEncoder;
 	
-	public OperatorsService(LocalRealtimeOperationStatus realtimeOpStatus,
+	public OperatorsService(
+			LocalRealtimeOperationStatus realtimeOpStatus,
 			OperatorsRepository operatorsRepository,
 			ResourcePlanning resourcePlanning,
 			BCryptPasswordEncoder bcryptEncoder) {
@@ -66,29 +67,22 @@ public class OperatorsService implements UserDetailsService{
 	public UserDetails loadUserByUsername(String username) 
 			throws UsernameNotFoundException {
 		
-		Optional<User> user = 
-			operatorsRepository.retrieveOperator(username);
+		User user = operatorsRepository.retrieve(username);
 		
-		if(user.isPresent()) {
-			System.out.println("HOLAAAAA LOAD");
-			realtimeOpStatus.addOperator(user.get());
-			return user.get();
-			
-		}else {
-			throw new UsernameNotFoundException("Invalid username.");
-		}
+		//Update operation status
+		realtimeOpStatus.addOperator(user);
+		
+		return user;
 		
 	}
 	
 	//Init/end operators in the system ---------------------
-	public void registerOperator(@NonNull String accountName, 
-			@NonNull OperatorType type) {
+	public void registerOperator(String accountName, 
+			OperatorType type) {
 		
 		//Retrieve user data from temporary sign-in memory
 		Optional<User> operator = 
 			realtimeOpStatus.retrieveOperator(accountName);
-		
-		//
 		
 		//Instantiate concrete user
 		if(operator.isPresent()) {
@@ -123,8 +117,8 @@ public class OperatorsService implements UserDetailsService{
 		
 	}
 	
-	public void unregisterOperator(@NonNull String accountName, 
-			@NonNull OperatorType type) {
+	public void unregisterOperator(String accountName, 
+			OperatorType type) {
 		
 		if(OperatorType.Controller.equals(type)) {
 			
@@ -141,11 +135,12 @@ public class OperatorsService implements UserDetailsService{
 	
 	//CRUD Operator ----------------------------------
 	public List<User> retrieveAllOperators() {
-		return operatorsRepository.retrieveAllOperators();
+		return operatorsRepository.retrieveAll();
 	}
 	
 	
-	public User retrieveOperator(String accountName, OperatorType type) {
+	public User retrieveOperator(String accountName, 
+			OperatorType type) {
 		
 		if(type.equals(OperatorType.Controller)) {
 			return retrieveController(accountName);
@@ -170,14 +165,9 @@ public class OperatorsService implements UserDetailsService{
 			return controller.get();
 		}else {
 			// deep strategy
-			controller = operatorsRepository.retrieveController(accountName);
-			if(controller.isPresent()) {
-				realtimeOpStatus.addOrUpdateController(controller.get());
-				return controller.get();
-			}else {
-				throw new NoSuchElementException(accountName 
-						+ " account name doen't exists");
-			}
+			Controller s = (Controller) operatorsRepository.retrieve(accountName);
+			realtimeOpStatus.addOrUpdateController(controller.get());
+			return s;
 		}
 	}
 	
@@ -217,27 +207,12 @@ public class OperatorsService implements UserDetailsService{
 	
 	
 	public void persistOperator(@NonNull User operator) {
-		try {
+		
 			// Encrypt password
 			String encryptedPassword = bcryptEncoder.encode(operator.getPassword());
 			operator.setPassword(encryptedPassword);
-			operatorsRepository.saveUser(operator);
-		}catch(BlackboxException e) {
+			operatorsRepository.save(operator);
 			
-			if(e.getErrorCode().equals(HttpStatus.BAD_REQUEST)) {
-				throw new BadRequestException("the request does "
-					+ "not contain the mandatory information, see "
-					+ "the API documentation.", e);
-			}else {
-				throw new ATCRuntimeException(
-					"the request couldn't be processed.", e);
-			}
-			
-		}
-	}
-	
-	public List<Setting> retrieveAllSettings() {
-		return operatorsRepository.retrieveAllSettings();
 	}
 	
 	
@@ -258,7 +233,7 @@ public class OperatorsService implements UserDetailsService{
 	}
 	
 	public List<Controller> retrieveOnlineControllers(){
-		return operatorsRepository.retrieveAllOnlineControllers();
+		return operatorsRepository.retrieveOnlineControllers();
 	}
 		
 	public List<EventTrack> retrieveEventTrackHistory() {
