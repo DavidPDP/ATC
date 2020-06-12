@@ -43,11 +43,11 @@ public class StepsRepository {
 		
 	}
 	
-	public Step retrieve(String name) {
+	public Step retrieve(String code) {
 		
 		Step step = 
 			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/steps/" + name,
+				blackboxEventManagmentApiURL + "/steps/" + code,
 				HttpMethod.GET, null, Step.class
 			).getBody();
 		

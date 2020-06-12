@@ -53,6 +53,8 @@ public class EventsRepository {
 	
 	public List<Event> retrieveAll(String interval){
 		
+		System.out.println(interval);
+		
 		List<Event> events = 
 			blackboxApi.exchange(blackboxEventManagmentApiURL 
 				+ "/events?interval=" + interval, HttpMethod.GET,

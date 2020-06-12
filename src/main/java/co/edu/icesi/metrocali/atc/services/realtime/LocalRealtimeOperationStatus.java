@@ -95,6 +95,7 @@ public class LocalRealtimeOperationStatus
 		categories = new HashMap<>();
 		settings = new HashMap<>();
 		roles = new HashMap<>();
+		steps = new HashMap<>();
 		
 	}
 	
@@ -107,8 +108,9 @@ public class LocalRealtimeOperationStatus
 	
 		entityCollection.clear();
 
+		System.out.println(type.getName());
 		for (Recoverable recoverable : entities) {
-			
+			System.out.println(recoverable.getKeyEntity());
 			entityCollection.put(
 				recoverable.getKeyEntity(), 
 				type.cast(recoverable)
@@ -132,6 +134,8 @@ public class LocalRealtimeOperationStatus
 			entityCollection = (Map<String, T>) categories;
 		}else if(type.getName().equals(State.class.getName())) {
 			entityCollection = (Map<String, T>) states;
+		}else if(type.getName().equals(Step.class.getName())) {
+			entityCollection = (Map<String, T>) steps;
 		}
 		
 		return entityCollection;
@@ -172,6 +176,10 @@ public class LocalRealtimeOperationStatus
 
 		}
 		
+	}
+	
+	public void removeStep(String code) {
+		steps.remove(code);
 	}
 	
 	@Override
@@ -223,6 +231,20 @@ public class LocalRealtimeOperationStatus
 //		
 //		return entityMap;
 //	}
+	
+	public void addOrUpdateStep(Step step) {
+		steps.put(step.getCode(), step);
+	}
+	
+	public void updateSteps(List<Step> steps) {
+		for (Step step : steps) {
+			this.steps.put(step.getCode(), step);
+		}
+	}
+	
+	public Optional<Step> retrieveStep(String code) {
+		return Optional.ofNullable(steps.get(code));
+	}
 	
 	@Override
 	public boolean addOrUpdateController(Controller controller) {

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.exceptions.EventOwnerException;
+import co.edu.icesi.metrocali.atc.exceptions.bb.BadRequestException;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
 import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
@@ -80,16 +82,28 @@ public class EventsService implements RecoveryService {
 			);
 		
 		if(interval.isPresent()) {
+
+			List<Event> events = Collections.emptyList();
 			
-			List<Event> events = 
-				eventRepository.retrieveAll(
+			try {
+				events = eventRepository.retrieveAll(
 					interval.get().getValue()
-			);
+				);
+			}catch(BadRequestException e) {
+				
+				if(!e.getCode().equals(HttpStatus.NOT_FOUND)) {
+					throw new ATCRuntimeException(
+						"Could not retrieve any event", e);
+				}
+				
+			}
 			
 			return new ArrayList<Recoverable>(events);
 			
 		}else {
-			throw new ATCRuntimeException("nasdasd");
+			throw new ATCRuntimeException(
+				"The setting Recover_Time is not loaded at "
+				+ "the time of the request.");
 		}
 		
 	}
@@ -453,8 +467,12 @@ public class EventsService implements RecoveryService {
 		
 		Event event = retrieveInRealTime(code);
 		
-		//Create trace
-		createTrack(event, authorName, StateValue.Archived);
+		//No trace is created. Only the end time is 
+		//created for the verified status.
+		EventTrack lastEventTrack = event.getLastEventTrack();
+		lastEventTrack.setEndTime(
+				new Timestamp(System.currentTimeMillis()));
+		event = eventRepository.save(event);
 		
 		//Update operation status
 		realtimeStatus.addOrUpdateEvent(event);

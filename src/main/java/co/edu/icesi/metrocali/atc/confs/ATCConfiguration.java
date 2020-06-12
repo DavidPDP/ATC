@@ -16,8 +16,8 @@ public class ATCConfiguration {
 	public RestTemplate blackboxApi() {
 		
 		RestTemplate restTemplate = new RestTemplate();
-		//restTemplate.setErrorHandler(
-		//		new BlackboxExceptionHandler());
+		restTemplate.setErrorHandler(
+				new BlackboxExceptionHandler());
 		
 		return restTemplate;
 		

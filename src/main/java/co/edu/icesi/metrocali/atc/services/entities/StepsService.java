@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.services.entities;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -7,13 +8,16 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.entities.events.Step;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.repositories.StepsRepository;
 import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
+import co.edu.icesi.metrocali.atc.services.recovery.RecoveryService;
 
 @Service
-public class StepsService {
+public class StepsService implements RecoveryService {
 
 	private StepsRepository stepsRepository;
 	
@@ -24,6 +28,26 @@ public class StepsService {
 		
 		this.stepsRepository = stepsRepository;
 		this.realtimeOperationStatus = realtimeOperationStatus;
+		
+	}
+	
+	@Override
+	public Class<? extends Recoverable> getType() {
+		return Step.class;
+	}
+
+	@Override
+	public RecoveryPrecedence getRecoveryPrecedence() {
+		return RecoveryPrecedence.Second;
+	}
+
+	@Override
+	public List<Recoverable> recoveryEntities() {
+		
+		List<Step> steps = 
+			stepsRepository.retrieveAll();
+		
+		return new ArrayList<Recoverable>(steps);
 		
 	}
 	
@@ -39,7 +63,7 @@ public class StepsService {
 			states = stepsRepository.retrieveAll();
 			
 			//Update operation status
-			//realtimeOperationStatus.updateStates(states);
+			realtimeOperationStatus.updateSteps(states);
 		}
 		
 		if(states.isEmpty()) {
@@ -52,26 +76,46 @@ public class StepsService {
 		
 	}
 	
-	public Step retrieve(String description) {
+	public Step retrieve(String code) {
 		
-		Step state = null;
+		Step step = null;
 		
-		Optional<Step> shallowState = null;
-			//realtimeOperationStatus.retrieveStep(description);
+		Optional<Step> shallowState = 
+			realtimeOperationStatus.retrieveStep(code);
 		
 		if(shallowState.isPresent()) {
 			//Shallow copy
-			state = shallowState.get();
+			step = shallowState.get();
 		}else {
 			//Deep copy
-			state =	stepsRepository.retrieve(description);
+			step =	stepsRepository.retrieve(code);
 			
 			//Update operation status
-			//realtimeOperationStatus.addOrUpdateState(state);
+			realtimeOperationStatus.addOrUpdateStep(step);
 		
 		}
 		
-		return state;
+		return step;
+		
+	}
+	
+	public void save(Step step) {
+		
+		Step persistedStep = 
+				stepsRepository.save(step);
+		
+		//Update operation state
+		realtimeOperationStatus
+			.addOrUpdateStep(persistedStep);
+		
+	}
+	
+	public void delete(String code) {
+		
+		//Update operation state
+		realtimeOperationStatus.removeStep(code);
+		
+		stepsRepository.delete(code);
 		
 	}
 	

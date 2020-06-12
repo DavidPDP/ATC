@@ -23,6 +23,14 @@ public interface RealtimeOperationStatus {
 //	
 //	public void persist(Class<?> type, Object entity);
 	
+	public void removeStep(String code);
+	
+	public void addOrUpdateStep(Step step);
+	
+	public void updateSteps(List<Step> steps);
+	
+	public Optional<Step> retrieveStep(String code);
+	
 	public List<Step> retrieveAllSteps();
 	
 	public void persistRole(Role role);

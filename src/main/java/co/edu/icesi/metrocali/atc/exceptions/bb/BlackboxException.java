@@ -7,7 +7,7 @@ public class BlackboxException extends ExternalApiResponseException{
 
 	private static final long serialVersionUID = 6102122432409043222L;
 	
-	private HttpStatus errorCode;
+	private HttpStatus code;
 	
 	/**
 	 * Construct a {@code BlackboxException} with the specified detail message.
@@ -35,13 +35,13 @@ public class BlackboxException extends ExternalApiResponseException{
 	 * @param errorCode the Http status code
 	 */
 	public BlackboxException(@Nullable String msg, @Nullable Throwable cause,
-			HttpStatus errorCode) {
+			HttpStatus code) {
 		super(msg, cause);
-		this.errorCode = errorCode;
+		this.code = code;
 	}
 	
-	public HttpStatus getErrorCode() {
-		return this.errorCode;
+	public HttpStatus getCode() {
+		return this.code;
 	}
 	
 }

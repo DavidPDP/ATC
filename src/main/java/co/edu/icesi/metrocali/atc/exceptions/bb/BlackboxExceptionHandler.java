@@ -24,10 +24,8 @@ public class BlackboxExceptionHandler
 			
 			BadRequestException newException =
 				new BadRequestException(
-					"The request made is malformed. "
-					+ "Verify that the call is being made "
-					+ "on the corresponding route with the "
-					+ "indicated parameters.", e
+					"the request could not be completed.", 
+					e, e.getStatusCode()
 			);
 			
 			//log.error("", newException);
@@ -40,7 +38,7 @@ public class BlackboxExceptionHandler
 					"An error has occurred in the persistence "
 					+ "layer, contact the admin and request an "
 					+ "explanation of the following ticket "
-					+ "or see the trace", e
+					+ "or see the trace", e, e.getStatusCode()
 			);
 			
 			//log.error("", newException);

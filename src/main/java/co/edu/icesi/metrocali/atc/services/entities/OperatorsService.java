@@ -221,7 +221,7 @@ public class OperatorsService implements UserDetailsService{
 			operatorsRepository.deleteUser(accountName);
 		}catch(BlackboxException e) {
 			
-			if(e.getErrorCode().equals(HttpStatus.BAD_REQUEST)) {
+			if(e.getCode().equals(HttpStatus.BAD_REQUEST)) {
 				throw new BadRequestException(
 					"the user doesn't exist", e);
 			}else {

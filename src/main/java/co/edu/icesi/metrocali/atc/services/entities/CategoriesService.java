@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.entities.events.Protocol;
+import co.edu.icesi.metrocali.atc.entities.events.Step;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
 import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
@@ -98,7 +100,22 @@ public class CategoriesService implements RecoveryService {
 		}
 	}
 	
-	public void save(Category category) {
+	public void create(Category category) {
+		
+		for (Protocol protocol : category.getProtocols()) {
+			
+			String stepCode = protocol.getStep().getCode();
+			Optional<Step> step = 
+				realtimeOperationStatus.retrieveStep(stepCode);
+			
+			if(step.isPresent()) {
+				protocol.setStep(step.get());
+			}else {
+				throw new ATCRuntimeException("The step is not "
+					+ "loaded at the time of making the request.");
+			}
+			
+		}
 		
 		Category persistedCategory = 
 				categoriesRepository.save(category);
@@ -106,6 +123,12 @@ public class CategoriesService implements RecoveryService {
 		//Update operation state
 		realtimeOperationStatus
 			.addOrUpdateCategory(persistedCategory);
+		
+	}
+	
+	public void update(Category category) {
+		
+		
 		
 	}
 	

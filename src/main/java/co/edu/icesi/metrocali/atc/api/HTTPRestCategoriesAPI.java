@@ -55,12 +55,12 @@ public class HTTPRestCategoriesAPI {
 		
 	}
 	
-	@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "')")
+	//@PreAuthorize("hasRole('" + PermissionLevel.ADMIN + "')")
 	@PostMapping
-	public ResponseEntity<HttpStatus> save(
+	public ResponseEntity<HttpStatus> create(
 			@RequestBody @NonNull Category category) {
-		
-		categoriesService.save(category);
+		System.out.println("HOLAAAAAA");
+		categoriesService.create(category);
 		return ResponseEntity.ok().build();
 		
 	}
