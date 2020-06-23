@@ -1,11 +1,12 @@
-package co.edu.icesi.metrocali.atc.repositories.evaluator;
+package co.edu.icesi.metrocali.atc.evaluator.repositories;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
-import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
+import co.edu.icesi.metrocali.atc.evaluator.entities.EvalParameter;
+
 
 @Repository
 public interface EvalParameterRepository extends CrudRepository<EvalParameter, Integer> {
