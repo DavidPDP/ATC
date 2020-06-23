@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.services.evaluator;
+package co.edu.icesi.metrocali.atc.evaluator.services;
 
 import java.sql.Timestamp;
 import java.util.Date;
@@ -7,8 +7,8 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
-import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParameterRepository;
+import co.edu.icesi.metrocali.atc.evaluator.entities.EvalParameter;
+import co.edu.icesi.metrocali.atc.evaluator.repositories.EvalParameterRepository;
 import lombok.extern.log4j.Log4j2;
 
 @Service

@@ -1,13 +1,14 @@
-package co.edu.icesi.metrocali.atc.services.evaluator;
+package co.edu.icesi.metrocali.atc.evaluator.services;
 
 import java.sql.Timestamp;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
-import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
-import co.edu.icesi.metrocali.atc.repositories.evaluator.FormulasRepository;
-import co.edu.icesi.metrocali.atc.repositories.evaluator.VariableRepository;
+import co.edu.icesi.metrocali.atc.evaluator.entities.Formula;
+import co.edu.icesi.metrocali.atc.evaluator.entities.Variable;
+import co.edu.icesi.metrocali.atc.evaluator.repositories.FormulasRepository;
+import co.edu.icesi.metrocali.atc.evaluator.repositories.VariableRepository;
+
 
 
 
