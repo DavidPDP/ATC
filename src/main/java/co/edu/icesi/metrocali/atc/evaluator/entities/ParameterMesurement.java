@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.entities.evaluator;
+package co.edu.icesi.metrocali.atc.evaluator.entities;
 
 
 import javax.persistence.*;
