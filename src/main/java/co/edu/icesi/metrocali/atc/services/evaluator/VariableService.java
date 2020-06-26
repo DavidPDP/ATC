@@ -21,6 +21,7 @@ public class VariableService {
     private FormulasRepository formulasRepository;
 
 
+    //TODO: En todos los getters se debe hacer el attacg de last formula. Ya sea que se deba consultar a back o que se configure el back para que la traiga tal cual.
     public Optional<Variable> getVariable(String name) {
         return variableRepository.retrieveByName(name);
     }
