@@ -11,18 +11,22 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.icesi.metrocali.atc.constants.OperatorType;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
+import co.edu.icesi.metrocali.atc.constants.UserType;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.exceptions.bb.BadRequestException;
 import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
 import co.edu.icesi.metrocali.atc.services.entities.SettingsService;
+import co.edu.icesi.metrocali.atc.vos.ComplexOutputMessage;
+import lombok.NonNull;
 
 @RestController
 @RequestMapping("/atc/operators")
@@ -42,10 +46,40 @@ public class HTTPRestOperatorsAPI {
 	
 	//CRUD Operator ----------------------------------
 	@GetMapping
-	public ResponseEntity<List<User>> retrieveAllOperators(){
+	public ResponseEntity<ComplexOutputMessage> 
+		retrieveAllOperators(@RequestParam @NonNull Boolean online) {
+		
+		ComplexOutputMessage output = new ComplexOutputMessage();
+		
+		if(online) {
+			
+			List<Controller> controllers = 
+				operatorsService.retrieveAllControllers();
+			List<Omega> omegas = 
+				operatorsService.retrieveAllOmegas();
+				
+			output.addField("controllers", controllers);
+			output.addField("omegas", omegas);
+			
+		}else {
+			
+			List<User> operators = 
+				operatorsService.retrieveAllOperators();
+			
+			output.addField("operators", operators);
+			
+		}
+		
+		return ResponseEntity.ok(output);
+		
+	}
+	
+	@GetMapping("/online")
+	public ResponseEntity<List<Controller>> 
+		retrieveOnlineOperators() {
 		
 		return ResponseEntity.ok(
-			operatorsService.retrieveAllOperators()
+			operatorsService.retrieveOOControllers()
 		);
 		
 	}
@@ -98,22 +132,19 @@ public class HTTPRestOperatorsAPI {
 			@PathVariable String accountName) {
 		return new ResponseEntity<Controller>(
 			(Controller) operatorsService.retrieveOperator(
-				accountName, OperatorType.Controller
+				accountName, UserType.Controller
 			),
 			HttpStatus.OK
 		);
 		
 	}
 	
-	@GetMapping("/controllers/{accountName}/history/{interval}")
-	public ResponseEntity<List<UserTrack>> retrieveControllerHistory(
-			@PathVariable String accountName,
-			@PathVariable String interval){
+	@GetMapping("/controllers/{accountName}/history")
+	public ResponseEntity<List<UserTrack>> history(
+		@PathVariable String accountName){
 		
 		return ResponseEntity.ok(
-			operatorsService.retrieveUserTrackHistory(
-				accountName, interval
-			)
+			operatorsService.history(accountName)
 		);
 		
 	}

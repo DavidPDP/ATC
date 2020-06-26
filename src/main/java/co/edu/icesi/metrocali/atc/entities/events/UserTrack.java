@@ -11,13 +11,24 @@ import lombok.Setter;
 @Getter @Setter
 public class UserTrack {
 
+	//Constructors ---------------------------------
+	public UserTrack() {}
+	
+	public UserTrack(User user, State state) {
+		
+		this.user = user;
+		this.state = state;
+		
+	}
+	//----------------------------------------------
+	
 	//Attributes -----------------------------------
 	private Integer id;
 
 	private Timestamp endTime;
 
 	private Timestamp startTime;
-
+	
 	private User user;
 	
 	private State state;

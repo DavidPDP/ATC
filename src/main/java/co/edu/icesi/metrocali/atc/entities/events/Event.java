@@ -30,24 +30,6 @@ public class Event implements Comparable<Event>, Recoverable{
 	}
 	//----------------------------------------------
 	
-	@Override
-	public String toString() {
-		
-		String text = "";
-		
-		for (EventTrack eventTrack : eventsTracks) {
-			text += "[id: " + eventTrack.getId() + " code: " + 
-				eventTrack.getCode() + "]";
-		}
-		
-		return text;
-	
-//		"[id: " + id + " code: " + code + " creation: " 
-//		+ creation + " description: " + description + " source: "
-//		+ source + " sourceType: " + sourceType + " title: " 
-//		+ title + " category: " + category.getName() + "]";		
-	}
-	
 	//Attributes -----------------------------------
 	private Long id;
 	
@@ -66,15 +48,17 @@ public class Event implements Comparable<Event>, Recoverable{
 	private Category category;
 	//----------------------------------------------
 	
+	//Interface implementation ---------------------
 	@Override
 	public String getKeyEntity() {
 		return this.code;
 	}
+	//----------------------------------------------
 	
 	//Aggregates -----------------------------------
 	private List<EventTrack> eventsTracks = new ArrayList<>();
 	
-	private List<ProtocolTrack> protocolTracks = new ArrayList<>();
+	private List<ProtocolTrack> protocolsTracks = new ArrayList<>();
 	//----------------------------------------------
 	
 	//Aggregates methods ---------------------------
@@ -83,7 +67,7 @@ public class Event implements Comparable<Event>, Recoverable{
 	}
 	
 	public void addProtocolTrack(ProtocolTrack protocolTrack) {
-		this.protocolTracks.add(protocolTrack);
+		this.protocolsTracks.add(protocolTrack);
 	}
 	//----------------------------------------------
 	
@@ -101,6 +85,28 @@ public class Event implements Comparable<Event>, Recoverable{
 	@Override
 	public int compareTo(Event o) {
 		return this.getLastPriority() - o.getLastPriority();
+	}
+	
+	@Override
+	public String toString() {
+		
+		StringBuilder format = new StringBuilder();
+		
+		format.append("[");
+		format.append("id: " + this.id + " ");
+		format.append("code: " + this.code + " ");
+		format.append("creation: " + this.creation + " ");
+		format.append("description: " + this.creation + " ");
+		format.append("source: " + this.source + ", ");
+		format.append("sourceType: " + this.sourceType + " ");
+		format.append("title: " + this.title + " ");
+		format.append("category: " + this.category.getName() + " ");
+		format.append("lastState: " + this.getLastEventTrack().getState().getName() + " ");
+		format.append("lastUser: " + this.getLastEventTrack().getUser().getAccountName());
+		format.append("]");
+		
+		return format.toString();
+	
 	}
 	//----------------------------------------------
 	

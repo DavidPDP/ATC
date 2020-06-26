@@ -6,7 +6,12 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 
 /**
- * Represents standard output messages.
+ * Represents the standardized output for output messages 
+ * consisting of sets of different entities or information 
+ * that is not encapsulated in the entities.
+ * 
+ * @author <a href="mailto:
+ * johan.ballesteros@outlook.com">Johan Ballesteros</a>
  */
 public class ComplexOutputMessage {
 

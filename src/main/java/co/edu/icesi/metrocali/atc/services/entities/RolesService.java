@@ -3,9 +3,11 @@ package co.edu.icesi.metrocali.atc.services.entities;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import co.edu.icesi.metrocali.atc.constants.UserType;
 import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.repositories.RolesRepository;
@@ -30,7 +32,7 @@ public class RolesService {
 		List<Role> roles = Collections.emptyList();
 		
 		if(shallow) {
-			roles = realtimeOperationStatus.retrieveRoles();
+			roles = realtimeOperationStatus.retrieveAll(Role.class);
 		}else {
 			roles = rolesRepository.retrieveAll();
 		}
@@ -47,19 +49,38 @@ public class RolesService {
 		
 	}
 	
+	public Role retrieve(UserType userType) {
+		
+		Role role = null;
+		
+		Optional<Role> shallowRole = 
+			realtimeOperationStatus.retrieve(
+				Role.class, userType.name()
+			);
+		
+		if(shallowRole.isPresent()) {
+			role = shallowRole.get();
+		}else {
+			role = rolesRepository.retrieve(userType.name());
+		}
+		
+		return role;
+		
+	}
+	
 	public void save(Role role) {
 		
 		rolesRepository.save(role);
 		
 		//Update operation status
-		realtimeOperationStatus.persistRole(role);
+		realtimeOperationStatus.store(Role.class, role);
 		
 	}
 	
 	public void delete(String name) {
 		
 		//Update operation status
-		realtimeOperationStatus.removeRole(name);
+		realtimeOperationStatus.remove(Role.class, name);
 		
 		rolesRepository.delete(name);
 		

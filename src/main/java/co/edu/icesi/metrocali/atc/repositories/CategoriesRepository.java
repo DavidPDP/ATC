@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.events.Category;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 @Repository
 public class CategoriesRepository {
@@ -33,12 +35,20 @@ public class CategoriesRepository {
 	
 	public List<Category> retrieveAll() {
 		
-		List<Category> categories = 
-			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/categories", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Category>>() {}
-			).getBody();
+		List<Category> categories = null;
+		
+		try {
+			
+			categories = 
+				blackboxApi.exchange(
+					blackboxEventManagmentApiURL + "/categories", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Category>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			categories = Collections.emptyList();
+		}
 			
 		return categories;
 		

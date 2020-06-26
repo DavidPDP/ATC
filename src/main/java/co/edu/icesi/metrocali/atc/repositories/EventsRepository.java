@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 /**
  * Represents repository pattern from the DDD approach. 
@@ -53,13 +55,20 @@ public class EventsRepository {
 	
 	public List<Event> retrieveAll(String interval){
 		
-		System.out.println(interval);
+		List<Event> events = null;
 		
-		List<Event> events = 
-			blackboxApi.exchange(blackboxEventManagmentApiURL 
-				+ "/events?interval=" + interval, HttpMethod.GET,
-				null, new ParameterizedTypeReference<List<Event>>() {}
-		    ).getBody();
+		try {
+			
+			events = 
+				blackboxApi.exchange(
+					blackboxEventManagmentApiURL + "/events?interval=" 
+					+ interval, HttpMethod.GET,	null, 
+					new ParameterizedTypeReference<List<Event>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			events = Collections.emptyList();
+		}
 		
 		return events;
 		

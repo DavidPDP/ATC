@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.entities.policies;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -11,10 +12,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import co.edu.icesi.metrocali.atc.constants.OperatorType;
+import co.edu.icesi.metrocali.atc.constants.UserType;
+import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,7 +44,10 @@ public class User implements UserDetails,
 	//----------------------------------------------
 	
 	//Aggregates -----------------------------------
-	private List<Role> roles;
+	private List<Role> roles = new ArrayList<>();
+	
+	@JsonIgnore
+	private List<UserTrack> userTracks = new ArrayList<>();
 	//----------------------------------------------
 
 	//Security methods------------------------------
@@ -98,8 +104,19 @@ public class User implements UserDetails,
 	}
 	
 	@Override
+	@JsonIgnore
 	public String getKeyEntity() {
 		return this.accountName;
+	}
+	//----------------------------------------------
+	
+	//Aggregates methods ---------------------------
+	public void addRole(Role role) {
+		this.roles.add(role);
+	}
+	
+	public void addUserTrack(UserTrack userTrack) {
+		this.userTracks.add(userTrack);
 	}
 	//----------------------------------------------
 	
@@ -115,7 +132,7 @@ public class User implements UserDetails,
 	 * 
 	 * @param user data encapsulator.
 	 * 
-	 * @see OperatorType
+	 * @see UserType
 	 */
 	public void fillUserData(User user) {
 		setId(user.getId());
@@ -123,8 +140,28 @@ public class User implements UserDetails,
 		setEmail(user.getEmail());
 		setName(user.getName());
 		setLastName(user.getLastName());
-		setPassword(user.getPassword());
 		setRoles(user.getRoles());
+		setUserTracks(user.getUserTracks());
+	}
+	
+	@JsonIgnoreProperties({"user","usersRemarks"})
+	public UserTrack getLastUserTrack() {
+		
+		UserTrack lastTrack = null;
+		int currentSize = this.userTracks.size();
+		
+		if(currentSize > 0) {
+			lastTrack = 
+				userTracks.get(this.userTracks.size() - 1);
+		}
+		
+		return lastTrack;
+		
+	}
+	
+	@JsonIgnore
+	public UserTrack removeLastUserTrack() {
+		return userTracks.remove(this.userTracks.size() - 1);
 	}
 	//----------------------------------------------
 	

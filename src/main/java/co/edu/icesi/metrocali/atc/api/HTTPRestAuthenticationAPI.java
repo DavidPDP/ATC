@@ -1,5 +1,7 @@
 package co.edu.icesi.metrocali.atc.api;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import co.edu.icesi.metrocali.atc.constants.OperatorType;
+import co.edu.icesi.metrocali.atc.constants.NotificationType;
+import co.edu.icesi.metrocali.atc.constants.UserType;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.security.TokenProvider;
 import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
-import co.edu.icesi.metrocali.atc.vos.SessionToken;
+import co.edu.icesi.metrocali.atc.services.notifications.NotificationManager;
 import co.edu.icesi.metrocali.atc.vos.ComplexOutputMessage;
+import co.edu.icesi.metrocali.atc.vos.ExternalConcerner;
+import co.edu.icesi.metrocali.atc.vos.SessionToken;
 
 @RestController
 @RequestMapping("/atc")
@@ -30,21 +35,25 @@ public class HTTPRestAuthenticationAPI {
 	
 	private OperatorsService operatorsService;
 	
+	private NotificationManager notificationManager;
+	
 	public HTTPRestAuthenticationAPI(
 			AuthenticationManager authenticationManager,
 			TokenProvider jwtTokenUtil,
-			OperatorsService operatorsService) {
+			OperatorsService operatorsService,
+			NotificationManager notificationManager) {
 		
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenUtil = jwtTokenUtil;
 		this.operatorsService = operatorsService;
+		this.notificationManager = notificationManager;
 		
 	}
 	
 	//Authentication --------------------------------
 	@PostMapping("/sign_in/{operatorType}")
 	public ResponseEntity<ComplexOutputMessage> signIn(
-			@PathVariable OperatorType operatorType,
+			@PathVariable UserType operatorType,
 			@RequestBody User operator) {
 		
 		try {
@@ -64,7 +73,21 @@ public class HTTPRestAuthenticationAPI {
 			String token = jwtTokenUtil.generateToken(authentication);
 			
 			//Subscribe the controller in the notification service
-			//this.notifications.subscribe();
+			String channelId = "No available";
+			
+			if(operatorType.equals(UserType.Controller)) {
+				
+				channelId = UUID.randomUUID().toString();
+				NotificationType[] concerns = 
+					{NotificationType.New_Event_Assignment};
+				
+				ExternalConcerner concerner = new ExternalConcerner(
+					channelId, operator.getAccountName(), 
+					operatorType, concerns);
+				
+				notificationManager.subscribe(concerner);
+				
+			}
 			
 			//Register the controller in the system
 			operatorsService.registerOperator(
@@ -82,6 +105,7 @@ public class HTTPRestAuthenticationAPI {
 			
 			output.addField("token", token);
 			output.addField("user", userData);
+			output.addField("channel", channelId);
 			
 			return ResponseEntity.ok(output);
 			
@@ -94,7 +118,7 @@ public class HTTPRestAuthenticationAPI {
 	}
 	
 	@DeleteMapping("/sign_out/{operatorType}/{accountName}")
-	public void signOut(@PathVariable OperatorType operatorType,
+	public void signOut(@PathVariable UserType operatorType,
 			@PathVariable String accountName) {
 		
 		operatorsService.unregisterOperator(accountName, operatorType);

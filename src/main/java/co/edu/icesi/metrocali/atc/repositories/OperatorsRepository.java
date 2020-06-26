@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +16,7 @@ import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 /**
  * Represents a repository(DDD) that manages the Policies Context's entities.
@@ -26,6 +28,8 @@ public class OperatorsRepository {
 	private RestTemplate blackboxApi;
 	
 	private String blackboxPoliciesApiURL;
+	
+	private String blackboxEventManagmentApiURL;
 
 	/**
 	 * Builds a repository(DDD) that manages entities in the Policies Context.
@@ -36,20 +40,32 @@ public class OperatorsRepository {
 	public OperatorsRepository(
 			@Qualifier("blackboxApi") RestTemplate blackboxApi,
 			@Value("${blackbox.apis.policies}") 
-			String blackboxPoliciesApiURL) {
+			String blackboxPoliciesApiURL,
+			@Value("${blackbox.apis.event_managment}") 
+			String blackboxEventManagmentApiURL) {
 		
 		this.blackboxApi = blackboxApi;
 		this.blackboxPoliciesApiURL = blackboxPoliciesApiURL;
+		this.blackboxEventManagmentApiURL = 
+				blackboxEventManagmentApiURL;
 		
 	}
 	
 	public List<User> retrieveAll() {
 		
-		List<User> operators =  
-			blackboxApi.exchange(blackboxPoliciesApiURL + "/users", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<User>>() {}
-			).getBody();
+		List<User> operators = null;
+				
+		try {
+			
+			operators =  
+				blackboxApi.exchange(blackboxPoliciesApiURL + "/users", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<User>>() {}
+				).getBody();
+			
+		}catch (ResourceNotFound e) {
+			operators = Collections.emptyList();
+		}
 		
 		return operators;
 		
@@ -62,12 +78,20 @@ public class OperatorsRepository {
 	 */
 	public List<Controller> retrieveAllControllers() {
 		
-		List<Controller> controllers = 
-			blackboxApi.exchange(
-				blackboxPoliciesApiURL + "/users/types?type=Controller", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Controller>>() {}
-			).getBody();
+		List<Controller> controllers = null;
+		
+		try {
+			
+			controllers = 
+				blackboxApi.exchange(
+					blackboxPoliciesApiURL + "/users/types?type=Controller", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Controller>>() {}
+				).getBody();
+			
+		}catch (ResourceNotFound e) {
+			controllers = Collections.emptyList();
+		}
 		
 		return controllers;
 		
@@ -75,12 +99,20 @@ public class OperatorsRepository {
 	
 	public List<Controller> retrieveOnlineControllers() {
 		
-		List<Controller> controllers = 
-			blackboxApi.exchange(
-				blackboxPoliciesApiURL + "/users/controllers/online",
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Controller>>() {}
-			).getBody();
+		List<Controller> controllers = null;
+		
+		try {
+			
+			controllers = 
+				blackboxApi.exchange(
+					blackboxPoliciesApiURL + "/users/controllers/online",
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Controller>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			controllers = Collections.emptyList();
+		}
 		
 		return controllers;
 		
@@ -88,12 +120,20 @@ public class OperatorsRepository {
 	
 	public List<Omega> retrieveAllOmegas() {
 		
-		List<Omega> omegas = 
-			blackboxApi.exchange(
-				blackboxPoliciesApiURL + "/users/types?type=Omega", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Omega>>() {}
-			).getBody();
+		List<Omega> omegas = null;
+		
+		try {
+			
+			omegas = 
+				blackboxApi.exchange(
+					blackboxPoliciesApiURL + "/users/types?type=Omega", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Omega>>() {}
+				).getBody();
+			
+		}catch (ResourceNotFound e) {
+			omegas = Collections.emptyList();
+		}
 		
 		return omegas;
 		
@@ -101,12 +141,20 @@ public class OperatorsRepository {
 	
 	public List<User> retrieveAllAdmins() {
 		
-		List<User> admins = 
-			blackboxApi.exchange(
-				blackboxPoliciesApiURL + "/users/types?type=Admin", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<User>>() {}
-			).getBody();
+		List<User> admins = null;
+		
+		try {
+			
+			admins = 
+				blackboxApi.exchange(
+					blackboxPoliciesApiURL + "/users/types?type=Admin", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<User>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			admins = Collections.emptyList();
+		}
 		
 		return admins;
 		
@@ -139,6 +187,37 @@ public class OperatorsRepository {
 		
 	}
 	
+	public UserTrack save(UserTrack userTrack) {
+		
+		HttpEntity<UserTrack> request = 
+				new HttpEntity<>(userTrack);
+		
+		UserTrack persistedUserTrack = 
+			blackboxApi.exchange(
+				blackboxEventManagmentApiURL + "/users_track", 
+				HttpMethod.POST, request, UserTrack.class
+			).getBody();
+		
+		return persistedUserTrack;
+		
+	}
+	
+	public List<UserTrack> save(List<UserTrack> userTrack) {
+		
+		HttpEntity<List<UserTrack>> request = 
+				new HttpEntity<>(userTrack);
+		
+		List<UserTrack> persistedUserTracks = 
+			blackboxApi.exchange(
+				blackboxEventManagmentApiURL + "/users_track/many", 
+				HttpMethod.POST, request, 
+				new ParameterizedTypeReference<List<UserTrack>>() {}
+			).getBody();
+		
+		return persistedUserTracks;
+		
+	}
+	
 	public void deleteUser(String accountName) {
 			
 		blackboxApi.exchange(
@@ -151,15 +230,24 @@ public class OperatorsRepository {
 	public List<UserTrack> retrieveUserTrackHistory(
 			String accountName, String interval) {
 		
-		List<UserTrack> userTracks =  
-			blackboxApi.exchange(
-				blackboxPoliciesApiURL + "/users_track/" 
-			    + accountName + "?interval=" + interval, 
-			HttpMethod.GET, null, 
-			new ParameterizedTypeReference<List<UserTrack>>() {}
-		).getBody();
+		List<UserTrack> userTracks = null;
+		
+		try {
+			
+			userTracks = 
+				blackboxApi.exchange(
+					blackboxEventManagmentApiURL + "/users_track/" 
+					+ accountName + "?interval=" + interval, 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<UserTrack>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			userTracks = Collections.emptyList();
+		}
 		
 		return userTracks;
 		
 	}
+	
 }

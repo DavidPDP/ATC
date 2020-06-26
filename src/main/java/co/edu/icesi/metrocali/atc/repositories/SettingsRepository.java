@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 @Repository
 public class SettingsRepository {
@@ -31,11 +33,19 @@ public class SettingsRepository {
 	
 	public List<Setting> retrieveAll(){
 				
-		List<Setting> settings = 
-			blackboxApi.exchange(blackboxPoliciesApiURL + "/settings", 
-			HttpMethod.GET, null, 
-			new ParameterizedTypeReference<List<Setting>>() {}
-		).getBody();
+		List<Setting> settings = null;
+		
+		try {
+			
+			settings = 
+				blackboxApi.exchange(blackboxPoliciesApiURL + "/settings", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Setting>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			settings = Collections.emptyList();
+		}
 			
 		return settings;
 		

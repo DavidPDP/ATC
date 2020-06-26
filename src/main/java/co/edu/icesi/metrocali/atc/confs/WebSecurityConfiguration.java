@@ -14,6 +14,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import co.edu.icesi.metrocali.atc.constants.SecurityConstants;
 import co.edu.icesi.metrocali.atc.security.RestAuthenticationEntryPoint;
@@ -49,7 +52,7 @@ public class WebSecurityConfiguration
     @Override
 	protected void configure(HttpSecurity http) throws Exception {
 		
-    	http.csrf().disable()
+    	http.cors().and().csrf().disable()
 		.authorizeRequests().antMatchers(
 			SecurityConstants.Login_Url
 		)
@@ -63,6 +66,26 @@ public class WebSecurityConfiguration
 		);
 		
 	}
+    
+    @Bean
+    public CorsFilter corsFilter() {
+    	//TODO outsource the filter
+        UrlBasedCorsConfigurationSource source = 
+        	new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        
+        config.setAllowCredentials(true);
+        config.addAllowedOrigin("*");
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("GET");
+        config.addAllowedMethod("POST");
+        config.addAllowedMethod("DELETE");
+        config.addAllowedMethod("PATCH");
+        source.registerCorsConfiguration("/**", config);
+        
+        return new CorsFilter(source);
+        
+    }
     
     @Override
     @Bean

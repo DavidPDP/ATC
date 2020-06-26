@@ -11,14 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import co.edu.icesi.metrocali.atc.constants.OperatorType;
 import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
+import co.edu.icesi.metrocali.atc.constants.UserType;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventRemark;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
+import co.edu.icesi.metrocali.atc.entities.events.Protocol;
+import co.edu.icesi.metrocali.atc.entities.events.ProtocolTrack;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
@@ -27,7 +29,7 @@ import co.edu.icesi.metrocali.atc.exceptions.EventOwnerException;
 import co.edu.icesi.metrocali.atc.exceptions.bb.BadRequestException;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
-import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import co.edu.icesi.metrocali.atc.services.recovery.RecoveryService;
 
@@ -36,7 +38,7 @@ public class EventsService implements RecoveryService {
 	
 	private EventsRepository eventRepository;
 	
-	private LocalRealtimeOperationStatus realtimeStatus;
+	private RealtimeOperationStatus realtimeStatus;
 	
 	private OperatorsService operatorsService;
 	
@@ -46,13 +48,16 @@ public class EventsService implements RecoveryService {
 	
 	private StatesService statesService;
 	
+	private SettingsService settingsService;
+	
 	public EventsService(
 			EventsRepository eventRepository,
-			LocalRealtimeOperationStatus realtimeStatus,
+			RealtimeOperationStatus realtimeStatus,
 			OperatorsService operatorsService,
 			ResourcePlanning resourcePlanning,
 			CategoriesService categoriesService,
-			StatesService statesService) {
+			StatesService statesService,
+			SettingsService settingsService) {
 		
 		this.eventRepository = eventRepository;
 		this.realtimeStatus = realtimeStatus;
@@ -60,6 +65,7 @@ public class EventsService implements RecoveryService {
 		this.resourcePlanning = resourcePlanning;
 		this.categoriesService = categoriesService;
 		this.statesService = statesService;
+		this.settingsService = settingsService;
 		
 	}
 	
@@ -76,38 +82,28 @@ public class EventsService implements RecoveryService {
 	@Override
 	public List<Recoverable> recoveryEntities() {
 		
-		Optional<Setting> interval = 
-			realtimeStatus.retrieveSetting(
-				SettingKey.Recover_Time
-			);
-		
-		if(interval.isPresent()) {
+		Setting interval = 
+			settingsService.retrieve(SettingKey.Recover_Time);
 
-			List<Event> events = Collections.emptyList();
+		List<Event> events = Collections.emptyList();
+		
+		try {
 			
-			try {
-				events = eventRepository.retrieveAll(
-					interval.get().getValue()
-				);
-			}catch(BadRequestException e) {
-				
-				if(!e.getCode().equals(HttpStatus.NOT_FOUND)) {
-					throw new ATCRuntimeException(
-						"Could not retrieve any event", e);
-				}
-				
+			events = eventRepository.retrieveAll(
+				interval.getValue());
+			
+		}catch(BadRequestException e) {
+			
+			if(!e.getCode().equals(HttpStatus.NOT_FOUND)) {
+				throw new ATCRuntimeException(
+					"Could not retrieve any event", e);
 			}
 			
-			return new ArrayList<Recoverable>(events);
-			
-		}else {
-			throw new ATCRuntimeException(
-				"The setting Recover_Time is not loaded at "
-				+ "the time of the request.");
 		}
 		
+		return new ArrayList<Recoverable>(events);
+		
 	}
-	
 	
 	//CRUD -----------------------------------------
 	public List<Event> retrieveAll(boolean shallow) {
@@ -127,7 +123,7 @@ public class EventsService implements RecoveryService {
 		Event event = null;
 		
 		Optional<Event> shallowEvent = 
-				realtimeStatus.retrieveEvent(code);
+				realtimeStatus.retrieve(Event.class, code);
 		
 		if(shallowEvent.isPresent()) {
 			//Shallow copy
@@ -146,7 +142,7 @@ public class EventsService implements RecoveryService {
 		Event event = null;
 		
 		Optional<Event> shallowEvent = 
-				realtimeStatus.retrieveEvent(code);
+				realtimeStatus.retrieve(Event.class, code);
 		
 		if(shallowEvent.isPresent()) {
 			event = shallowEvent.get();
@@ -191,14 +187,11 @@ public class EventsService implements RecoveryService {
 				category, 
 				eventTracks
 			);
-		System.out.println("Size: " + event.getEventsTracks().size()
-				+ "P1: " + event.toString());
+		
 		event = eventRepository.save(event);
-		System.out.println("Size: " + event.getEventsTracks().size()
-				+ "P2: " + event.toString());
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		resourcePlanning.addPendingEvent(event);
 		
 		return event.getCode();
@@ -210,7 +203,7 @@ public class EventsService implements RecoveryService {
 		
 		Controller author = 
 			(Controller) operatorsService.retrieveOperator(
-				authorName, OperatorType.Controller
+				authorName, UserType.Controller
 			);
 		
 		State state = 
@@ -235,17 +228,19 @@ public class EventsService implements RecoveryService {
 	 * @return List with all events in the assigned state.
 	 * @throws IllegalArgumentException if the controller doesn't exist.
 	 */
-	public List<Event> retrieveAssignedEvents(@NonNull String accountName){
+	public List<Event> retrieveAssignedEvents(
+		@NonNull String accountName){
 		
 		List<Event> assignedEvents = 
-			realtimeStatus.retrieveEventsByStates(accountName, 
-				Arrays.asList(StateValue.Assigned.name())
-		);
+			realtimeStatus.filter(Event.class,
+				"lastUser=" + accountName,
+				"lastState=" + StateValue.Assigned.name());
 		
 		if(!assignedEvents.isEmpty()) {
 			return assignedEvents;
 		}else {
-			throw new IllegalArgumentException();
+			return null;
+			//throw new IllegalArgumentException();
 		}
 		
 	}
@@ -258,39 +253,94 @@ public class EventsService implements RecoveryService {
 	 * @return List with all events in the assigned state.
 	 * @throws IllegalArgumentException if the controller doesn't exist.
 	 */
-	public List<Event> retrieveActiveEvents(@NonNull String accountName){
+	public List<Event> retrieveActiveEvents(
+		@NonNull String accountName){
 		
 		List<Event> activeEvents = 
-			realtimeStatus.retrieveEventsByStates(accountName, 
-				Arrays.asList(StateValue.In_Proccess.name(),
-					StateValue.On_Hold.name())
-		);
+			realtimeStatus.filter(Event.class,
+				"lastUser=" + accountName,	
+				"lastState=" + StateValue.In_Proccess.name(),
+				"lastState=" + StateValue.On_Hold.name());
 		
 		if(!activeEvents.isEmpty()) {
 			return activeEvents;
 		}else {
-			throw new IllegalArgumentException();
+			//throw new IllegalArgumentException();
+			return null;
 		}
 	}
+	
+	public List<Event> retrieveSolvedEvents(
+		@NonNull String accountName){
+		
+		List<Event> activeEvents = 
+			realtimeStatus.filter(Event.class,
+				"lastUser=" + accountName,	
+				"lastState=" + StateValue.Verification.name(),
+				"lastState=" + StateValue.On_Hold.name());
+		
+		if(!activeEvents.isEmpty()) {
+			return activeEvents;
+		}else {
+			//throw new IllegalArgumentException();
+			return null;
+		}
+	}
+	
 	//----------------------------------------------
 	
 	//Update event state methods -------------------
+	public void assignEvent(Event event, 
+			String authorName, boolean manual) {
+		
+		if(manual) {
+			
+		}
+		
+		Controller controller = 
+			(Controller) operatorsService.retrieveOperator(
+				authorName, UserType.Controller
+			);
+		
+		createTrack(event, controller, StateValue.Assigned);
+		
+		realtimeStatus.store(Event.class, event);
+		realtimeStatus.storeToList(
+			Controller.class, controller, Event.class, event);
+		
+	}
+	
 	public void acceptEvent(String authorName, String code) {
 		
-		//Verify that the user has permission to update
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
-		verifyOwnership(event, authorName);
+		Controller controller = 
+			(Controller) operatorsService.retrieveOperator(
+				authorName, UserType.Controller
+			);
 		
-		//Create trace
-		System.out.println("Size: " + event.getEventsTracks().size()
-				+ " P1: " + event.toString());
-		createTrack(event, authorName, StateValue.In_Proccess);
-		System.out.println("Size: " + event.getEventsTracks().size()
-				+ " P2: " + event.toString());
+		//Verifies that the user has permission to update
+		verifyOwnership(event, controller.getAccountName());
 		
-		realtimeStatus.addOrUpdateEvent(event);
-		realtimeStatus.assignEvent(event, authorName);
-	
+		//Verifies next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.In_Proccess
+		);
+		
+		//Creates trace
+		createTrack(event, controller, StateValue.In_Proccess);
+		
+		//Updates Controller state
+		controller.setLastEvent(event);
+		operatorsService.changeState(
+			UserType.Controller, controller, 
+			StateValue.Busy
+		);
+		
+		//Update operation status
+		realtimeStatus.store(Event.class, event);
+
 	}
 	
 	private void verifyOwnership(Event event, 
@@ -307,12 +357,7 @@ public class EventsService implements RecoveryService {
 	}
 	
 	private void createTrack(Event event, 
-			String author, StateValue eventState) {
-		
-		Controller user = 
-			(Controller) operatorsService.retrieveOperator(
-				author, OperatorType.Controller
-			);
+			Controller author, StateValue eventState) {
 		
 		State state = statesService.retrieve(eventState);
 		
@@ -322,7 +367,7 @@ public class EventsService implements RecoveryService {
 		
 		EventTrack newEventTrack = new EventTrack(
 			lastEventTrack.getPriority(),
-			user, 
+			author, 
 			state
 		);
 		
@@ -331,96 +376,116 @@ public class EventsService implements RecoveryService {
 		
 	}
 	
-	public void assignEvent(Event event, 
-			String authorName, boolean manual) {
-		
-		if(manual) {
-			
-		}
-		
-		createTrack(event, authorName, StateValue.Assigned);
-		
-		realtimeStatus.addOrUpdateEvent(event);
-		realtimeStatus.assignEvent(event, authorName);
-		
-	}
-	
 	public void rejectEvent(String authorName,
 			String code, EventRemark inputFields) {
 		
-		//Verify that the user has permission to update
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
-		verifyOwnership(event, authorName);
-		
-		//Create trace and add justification
-		Controller author = 
+		Controller controller = 
 			(Controller) operatorsService.retrieveOperator(
-				authorName, OperatorType.Controller
+				authorName, UserType.Controller
 			);
 		
+		//Verifies that the user has permission to update
+		verifyOwnership(event, authorName);
+		
+		//Verify next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.Pending
+		);
+		
+		//Create trace and add justification
 		EventRemark remark = new EventRemark(
-				inputFields.getContent(), author);
+				inputFields.getContent(), controller);
 		
 		event.getLastEventTrack().addEventRemark(remark);
 		
-		createTrack(event, authorName, StateValue.Pending);
+		createTrack(event, controller, StateValue.Pending);
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		resourcePlanning.addPendingEvent(event);
 		
-		checkAvailabilityAssignment(author);
+		if(operatorsService.isAvailable(controller)) {
+			
+			operatorsService.changeState(
+				UserType.Controller, controller, 
+				StateValue.Available
+			);
+			
+			resourcePlanning.addAvailableController(controller);
+			
+		}
 		
-	}
-	
-	private void checkAvailabilityAssignment(Controller controller) {
-		//TODO
-		resourcePlanning.addAvailableController(controller);
 	}
 	
 	public void completeEvent(String authorName, String code) {
 		
-		//Verify that the user has permission to update
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
-		verifyOwnership(event, authorName);
-
-		//Create trace
-		createTrack(event, authorName, StateValue.Verification);
-		
-		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
-		
 		Controller controller = 
 			(Controller) operatorsService.retrieveOperator(
-				authorName, OperatorType.Controller
+				authorName, UserType.Controller
 			);
 		
-		checkAvailabilityAssignment(controller);
+		//Verifies that the user has permission to update
+		verifyOwnership(event, authorName);
+
+		//Verifies next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.Verification
+		);
+		
+		//Create trace
+		createTrack(event, controller, StateValue.Verification);
+		
+		//Update operation status
+		realtimeStatus.store(Event.class, event);
+		
+		if(operatorsService.isAvailable(controller)) {
+			
+			operatorsService.changeState(
+				UserType.Controller, controller, 
+				StateValue.Available
+			);
+			
+			resourcePlanning.addAvailableController(controller);
+			
+		}
 
 	}
 	
 	public void sendBack(String code, String authorName,
 			EventRemark inputFields) {
 		
-		//Verify that the user has permission to update
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
+		Controller controller = 
+			(Controller) operatorsService.retrieveOperator(
+				authorName, UserType.Controller
+			);
+		
+		//Verifies that the user has permission to update
 		verifyOwnership(event, authorName);
 
-		//Create trace
-		Controller author = 
-				(Controller) operatorsService.retrieveOperator(
-					authorName, OperatorType.Controller
-				);
+		//Verifies next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.Pending
+		);
 		
+		//Creates trace
 		EventRemark remark = new EventRemark(
-				inputFields.getContent(), author);
+				inputFields.getContent(), controller);
 		
 		event.getLastEventTrack().addEventRemark(remark);
 		
-		createTrack(event, authorName, StateValue.Pending);
+		createTrack(event, controller, StateValue.Pending);
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		resourcePlanning.addPendingEvent(event);
 
 	}
@@ -428,45 +493,76 @@ public class EventsService implements RecoveryService {
 	public void putOnHold(String code, String authorName,
 			EventRemark inputFields) {
 		
-		//Verify that the user has permission to update
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
+		Controller controller = 
+			(Controller) operatorsService.retrieveOperator(
+				authorName, UserType.Controller
+			);
+		
+		//Verifies that the user has permission to update
 		verifyOwnership(event, authorName);
 
-		//Create trace
-		Controller author = 
-				(Controller) operatorsService.retrieveOperator(
-					authorName, OperatorType.Controller
-				);
+		//Verifies next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.On_Hold
+		);
 		
+		//Creates trace
 		EventRemark remark = new EventRemark(
-				inputFields.getContent(), author);
+				inputFields.getContent(), controller);
 		
 		event.getLastEventTrack().addEventRemark(remark);
 		
-		createTrack(event, authorName, StateValue.On_Hold);
+		createTrack(event, controller, StateValue.On_Hold);
 		
-		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
-		resourcePlanning.addAvailableController(author);
+		//Updates operation status
+		realtimeStatus.store(Event.class, event);
+		
+		if(operatorsService.isAvailable(controller)) {
+			
+			operatorsService.changeState(
+				UserType.Controller, controller, 
+				StateValue.Available
+			);
+			
+			resourcePlanning.addAvailableController(controller);
+			
+		}
 		
 	}
 	
 	public void resumeEvent(String code, String authorName) {
 		
+		//Retrieves current data
 		Event event = retrieveInRealTime(code);
+		Controller controller = 
+			(Controller) operatorsService.retrieveOperator(
+				authorName, UserType.Controller
+			);
+		
+		//Verifies that the user has permission to update
+		verifyOwnership(event, authorName);
+		
+		//Verifies next state
+		statesService.verifyNextState(
+			event.getLastEventTrack().getState(), 
+			StateValue.In_Proccess
+		);
 		
 		//Create trace
-		createTrack(event, authorName, StateValue.In_Proccess);
+		createTrack(event, controller, StateValue.In_Proccess);
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		
 	}
 	
 	public void verifyEvent(String code, String authorName) {
 		
 		Event event = retrieveInRealTime(code);
-		
+				
 		//No trace is created. Only the end time is 
 		//created for the verified status.
 		EventTrack lastEventTrack = event.getLastEventTrack();
@@ -475,10 +571,12 @@ public class EventsService implements RecoveryService {
 		event = eventRepository.save(event);
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		
 	}
+	//----------------------------------------------
 	
+	//Business methods -----------------------------
 	public void changePriority(String authorName, 
 			String code, int priority) {
 		
@@ -490,7 +588,7 @@ public class EventsService implements RecoveryService {
 		createTrack(event, authorName, priority);
 		
 		//Update operation status
-		realtimeStatus.addOrUpdateEvent(event);
+		realtimeStatus.store(Event.class, event);
 		resourcePlanning.updateEventPriority(event);
 
 	}
@@ -500,7 +598,7 @@ public class EventsService implements RecoveryService {
 		
 		Controller user = 
 			(Controller) operatorsService.retrieveOperator(
-				author, OperatorType.Controller
+				author, UserType.Controller
 			);
 		
 		EventTrack lastEventTrack = event.getLastEventTrack();
@@ -517,52 +615,43 @@ public class EventsService implements RecoveryService {
 		event = eventRepository.save(event);
 		
 	}
-	//----------------------------------------------
 	
-	//Business methods -----------------------------
-	public void completeProtocolStep(String code, String stepName) {
-//		Event event = realtimeStatus.retrieveEvent(eventCode);
-//		createProtocolTrack(event, stepName, true);
-//		realtimeStatus.addOrUpdateEvent(event);
+	public void completeProtocolStep(String code, String stepCode) {
+		
+		Event event = retrieveInRealTime(code);
+		
+		//Find protocol
+		List<Protocol> eventProtocols = 
+			event.getCategory().getProtocols();
+		
+		Optional<Protocol> stepProtocol = 
+			eventProtocols.stream()
+				.filter(p -> 
+					p.getStep().getCode().equals(stepCode)
+				).findAny();
+		
+		if(!stepProtocol.isPresent()) {
+			
+			throw new ATCRuntimeException(
+				"Step with code" + stepCode + " does not exist "
+				+ "for this event. Review the event protocols "
+				+ "to make sure which steps are valid."
+			);
+			
+		}else {
+			
+			//Create trace
+			ProtocolTrack track = 
+				new ProtocolTrack(true, stepProtocol.get());
+			
+			event.addProtocolTrack(track);
+			event = eventRepository.save(event);
+			
+			//Update operation status
+			realtimeStatus.store(Event.class, event);
+		}
+		
 	}
-	
-//	private void createProtocolTrack(Event event, 
-//			String stepName, boolean done) {
-//		
-//		Optional<Protocol> protocol = 
-//			realtimeStatus.retrieveProtocolStep(
-//				event.getCode(), stepName
-//		);
-//		
-//		if(protocol.isPresent()) {
-//			
-//			ProtocolTrack protocolTrack = 
-//				new ProtocolTrack(done, protocol.get());
-//			
-//			event.addProtocolTrack(protocolTrack);
-//			
-//			//persistEvent(event);
-//			
-//		}else {
-//			throw new ATCRuntimeException("invalid protocol");
-//		}
-//		
-//	}
-//	
-//	public void createEventRemark(String code,
-//			String content, String accountName) {
-//		Event event = realtimeStatus.retrieveEvent(eventCode);
-//		Optional<Controller> author = 
-//				realtimeStatus.retrieveController(accountName);
-//		EventRemark eventRemark = new EventRemark(content, author.get());
-//		event.getLastEventTrack().addEventRemark(eventRemark);
-//		persistEvent(event);
-//		realtimeStatus.addOrUpdateEvent(event);
-//	}
-//	
-//	public List<Event> retrieveLastEvents(@NonNull String interval){
-//		return eventManagmentRepository.retrieveLastEvent(interval);
-//	}
 	//----------------------------------------------
 	
 }
