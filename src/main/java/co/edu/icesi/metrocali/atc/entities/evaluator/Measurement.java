@@ -1,4 +1,6 @@
-package co.edu.icesi.metrocali.atc.evaluator.entities;
+package co.edu.icesi.metrocali.atc.entities.evaluator;
+
+
 
 import java.util.Date;
 import lombok.AllArgsConstructor;
@@ -8,19 +10,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
-
 @Data
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Formula {
+public class Measurement {
 
-	private Integer idFormula;
+	private Integer idMeasurement;
 
 	private Date endDate;
 
-	private String expression;
+	private double value;
 
 	private Date startDate;
 

@@ -1,4 +1,4 @@
-package co.edu.icesi.metrocali.atc.evaluator.entities;
+package co.edu.icesi.metrocali.atc.entities.evaluator;
 
 import java.util.Date;
 import lombok.AllArgsConstructor;
