@@ -1,20 +1,24 @@
 package co.edu.icesi.metrocali.atc.services.entities;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import co.edu.icesi.metrocali.atc.constants.OperatorType;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
-import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
+import co.edu.icesi.metrocali.atc.constants.StateValue;
+import co.edu.icesi.metrocali.atc.constants.UserType;
+import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
@@ -23,41 +27,50 @@ import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.exceptions.bb.BadRequestException;
 import co.edu.icesi.metrocali.atc.exceptions.bb.BlackboxException;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
-import co.edu.icesi.metrocali.atc.services.realtime.LocalRealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
 
 /**
  * Manages the services of the operators. This includes 
  * the management of their entities and their reports.
  * For more information, consult the types of users 
- * ({@link OperatorType}) that are currently managed.
+ * ({@link UserType}) that are currently managed.
  * 
  * @author <a href="mailto:johan.ballesteros@outlook.com">Johan Ballesteros</a>
  * 
- * @see OperatorType 
+ * @see UserType 
  * @see UserDetailsService
  * 
  */
 @Service
 public class OperatorsService implements UserDetailsService{
 	
-	private LocalRealtimeOperationStatus realtimeOpStatus;
+	private RealtimeOperationStatus realtimeOpStatus;
 	
 	private OperatorsRepository operatorsRepository;
+	
+	private StatesService statesService;
+	
+	private SettingsService settingService;
 	
 	private ResourcePlanning resourcePlanning;
 	
 	private BCryptPasswordEncoder bcryptEncoder;
 	
 	public OperatorsService(
-			LocalRealtimeOperationStatus realtimeOpStatus,
+			RealtimeOperationStatus realtimeOpStatus,
 			OperatorsRepository operatorsRepository,
+			StatesService statesService,
+			SettingsService settingService,
 			ResourcePlanning resourcePlanning,
 			BCryptPasswordEncoder bcryptEncoder) {
 		
 		this.realtimeOpStatus = realtimeOpStatus;
 		this.operatorsRepository = operatorsRepository;
+		this.statesService = statesService;
+		this.settingService = settingService;
 		this.resourcePlanning = resourcePlanning;
 		this.bcryptEncoder = bcryptEncoder;
 		
@@ -70,37 +83,39 @@ public class OperatorsService implements UserDetailsService{
 		User user = operatorsRepository.retrieve(username);
 		
 		//Update operation status
-		realtimeOpStatus.addOperator(user);
+		realtimeOpStatus.store(User.class, user);
 		
 		return user;
 		
 	}
 	
-	//Init/end operators in the system ---------------------
+	//Init operators in the system ---------------------
 	public void registerOperator(String accountName, 
-			OperatorType type) {
+			UserType type) {
 		
 		//Retrieve user data from temporary sign-in memory
 		Optional<User> operator = 
-			realtimeOpStatus.retrieveOperator(accountName);
+			realtimeOpStatus.retrieve(User.class, accountName);
 		
 		//Instantiate concrete user
 		if(operator.isPresent()) {
+				
+			initUserTracks(operator.get());
 			
-			if(OperatorType.Controller.equals(type)) {
+			if(UserType.Controller.equals(type)) {
 				
 				Controller controller = new Controller();
 				controller.fillUserData(operator.get());
 				
-				realtimeOpStatus.addOrUpdateController(controller);
+				realtimeOpStatus.store(Controller.class, controller);
 				resourcePlanning.addAvailableController(controller);
 				
-			}else if(OperatorType.Omega.equals(type)) {
+			}else if(UserType.Omega.equals(type)) {
 				
 				Omega omega = new Omega();
 				omega.fillUserData(operator.get());
 				
-				realtimeOpStatus.addOrUpdateOmega(omega);
+				realtimeOpStatus.store(Omega.class, omega);
 				
 			}else {
 				throw new ATCRuntimeException("Operator type not found.", 
@@ -108,7 +123,7 @@ public class OperatorsService implements UserDetailsService{
 			}
 			
 			//Clear temporary memory
-			realtimeOpStatus.removeOperator(accountName);
+			realtimeOpStatus.remove(User.class, accountName);
 			
 		}else {
 			throw new ATCRuntimeException("User not found.", 
@@ -117,16 +132,129 @@ public class OperatorsService implements UserDetailsService{
 		
 	}
 	
-	public void unregisterOperator(String accountName, 
-			OperatorType type) {
+	private void initUserTracks(User user) {
 		
-		if(OperatorType.Controller.equals(type)) {
+		List<UserTrack> tracksToPersist = new ArrayList<>();
+		
+		//Creates new trace
+		State state = statesService.retrieve(StateValue.Available);
+		UserTrack newTrack = new UserTrack(user, state);
+		
+		//Retrieves last tracks
+		List<UserTrack> lastTracks = history(user.getAccountName());
+		
+		//Verifies if have open traces and closes them if yes 
+		if(!lastTracks.isEmpty()) {
+			user.setUserTracks(lastTracks);
+			UserTrack lastTrack = user.removeLastUserTrack();
 			
-			realtimeOpStatus.removeController(accountName);
+			if(lastTrack.getEndTime() == null) {
+				
+				lastTrack.setEndTime(
+					new Timestamp(System.currentTimeMillis()));
+				
+				tracksToPersist.add(lastTrack);
+				
+			}
 			
-		}else if(OperatorType.Omega.equals(type)) {
+		}
+		
+		tracksToPersist.add(newTrack);
+		
+		List<UserTrack> persistedTracks = 
+				operatorsRepository.save(tracksToPersist);
+		
+		//Update persisted tracks
+		user.getUserTracks().addAll(persistedTracks);
+		
+	}
+	
+	public List<UserTrack> history(String accountName) {
+		
+		Setting intervalTime = 
+			settingService.retrieve(SettingKey.Query_Time_Window);
+		
+		List<UserTrack> tracks = null;
+		
+		try {
+			tracks = operatorsRepository.retrieveUserTrackHistory(
+				accountName, intervalTime.getValue()
+			);
+		}catch (ResourceNotFound e) {
+			tracks = Collections.emptyList();
+		}
+		
+		return tracks;
+		
+	}
+	
+	public void changeState(UserType userType, 
+			User user, StateValue nextState) {
+		
+		//Verify next state is valid
+		State currentState = user.getLastUserTrack().getState();
+		statesService.verifyNextState(currentState, nextState);
+		
+		//Creates trace
+		createTrack(user, nextState);
+		
+		//Updates operation status
+		resolveUpdate(userType, user);
+		
+	}
+	
+	private void createTrack(User user, StateValue userState) {
+		
+		List<UserTrack> tracksToPersist = new ArrayList<>();
+		
+		//Closes last track
+		UserTrack lastUserTrack = user.removeLastUserTrack();
+		lastUserTrack.setEndTime(
+				new Timestamp(System.currentTimeMillis()));
+		
+		tracksToPersist.add(lastUserTrack);
+		
+		//Creates new trace
+		State state = statesService.retrieve(userState);
+		UserTrack newUsertrack = new UserTrack(user, state);
+		
+		tracksToPersist.add(newUsertrack);
+		
+		List<UserTrack> persistedTrack = 
+				operatorsRepository.save(tracksToPersist);
+		
+		//Update persisted tracks
+		user.getUserTracks().addAll(persistedTrack);
+		
+	}
+	
+	private void resolveUpdate(UserType userType, User user) {
+		if(userType.equals(UserType.Controller)) {
+			realtimeOpStatus.store(
+				Controller.class, (Controller) user);
+		}else if(userType.equals(UserType.Omega)) {
+			realtimeOpStatus.store(
+					Omega.class, (Omega) user);
+		}else if(userType.equals(UserType.Supervisor)) {
 			
-			realtimeOpStatus.removeOmega(accountName);
+		}else {
+			throw new ATCRuntimeException(
+				"The " + userType.name() 
+				+ " type is not supported."
+			);
+		}
+	}
+	
+	public void unregisterOperator(String accountName, 
+			UserType type) {
+				
+		if(UserType.Controller.equals(type)) {
+			
+			realtimeOpStatus.remove(Controller.class, accountName);
+			
+		}else if(UserType.Omega.equals(type)) {
+			
+			realtimeOpStatus.remove(Omega.class, accountName);
 			
 		}
 		
@@ -135,20 +263,52 @@ public class OperatorsService implements UserDetailsService{
 	
 	//CRUD Operator ----------------------------------
 	public List<User> retrieveAllOperators() {
+		
 		return operatorsRepository.retrieveAll();
+		
+	}
+	
+	public List<Controller> retrieveAllControllers() {
+	
+		return realtimeOpStatus.retrieveAll(Controller.class);
+		
+	}
+	
+	public List<Omega> retrieveAllOmegas() {
+	
+		return realtimeOpStatus.retrieveAll(Omega.class);
+		
 	}
 	
 	
 	public User retrieveOperator(String accountName, 
-			OperatorType type) {
+			UserType type) {
 		
-		if(type.equals(OperatorType.Controller)) {
+		if(type.equals(UserType.Controller)) {
 			return retrieveController(accountName);
-		}else if(type.equals(OperatorType.Omega)) {
+		}else if(type.equals(UserType.Omega)) {
 			return retrieveOmega(accountName);
 		}else {
 			throw new NoSuchElementException();
 		}
+		
+	}
+	
+	public boolean isAvailable(Controller controller) {
+		
+		boolean isAvailable = false;
+		
+		List<Event> inProcessEvents = 
+			realtimeOpStatus.filter(Event.class,
+				"lastUser=" + controller.getAccountName(),	
+				"lastState=" + StateValue.In_Proccess.name()
+			);
+		
+		if(inProcessEvents.isEmpty()) {
+			isAvailable = true;
+		}
+		
+		return isAvailable;
 		
 	}
 	
@@ -157,16 +317,17 @@ public class OperatorsService implements UserDetailsService{
 	 * @param accountName is the user's account name.
 	 * @return the searched user info.
 	 */
-	private Controller retrieveController(@NonNull String accountName) {
+	private Controller retrieveController(String accountName) {
 		Optional<Controller> controller = 
-				realtimeOpStatus.retrieveController(accountName);
+				realtimeOpStatus.retrieve(
+					Controller.class, accountName);
 		if(controller.isPresent()) {
 			// shallow strategy
 			return controller.get();
 		}else {
 			// deep strategy
 			Controller s = (Controller) operatorsRepository.retrieve(accountName);
-			realtimeOpStatus.addOrUpdateController(controller.get());
+			realtimeOpStatus.store(Controller.class, controller.get());
 			return s;
 		}
 	}
@@ -176,9 +337,10 @@ public class OperatorsService implements UserDetailsService{
 	 * @param accountName is the user's account name.
 	 * @return the searched user info.
 	 */
-	public Omega retrieveOmega(String accountName) {
+	private Omega retrieveOmega(String accountName) {
 		
-		Optional<Omega> omega = realtimeOpStatus.retrieveOmega(accountName);
+		Optional<Omega> omega = 
+			realtimeOpStatus.retrieve(Omega.class, accountName);
 		
 		if(omega.isPresent()) {
 			//Shallow strategy
@@ -206,17 +368,17 @@ public class OperatorsService implements UserDetailsService{
 	}
 	
 	
-	public void persistOperator(@NonNull User operator) {
+	public void persistOperator(User operator) {
 		
-			// Encrypt password
-			String encryptedPassword = bcryptEncoder.encode(operator.getPassword());
-			operator.setPassword(encryptedPassword);
-			operatorsRepository.save(operator);
+		// Encrypt password
+		String encryptedPassword = bcryptEncoder.encode(operator.getPassword());
+		operator.setPassword(encryptedPassword);
+		operatorsRepository.save(operator);
 			
 	}
 	
 	
-	public void deleteOperator(@NonNull String accountName) {
+	public void deleteOperator(String accountName) {
 		try {
 			operatorsRepository.deleteUser(accountName);
 		}catch(BlackboxException e) {
@@ -235,27 +397,9 @@ public class OperatorsService implements UserDetailsService{
 	public List<Controller> retrieveOnlineControllers(){
 		return operatorsRepository.retrieveOnlineControllers();
 	}
-		
-	public List<EventTrack> retrieveEventTrackHistory() {
-		return null;
-	}
 	
-	public List<UserTrack> retrieveUserTrackHistory(
-			@NonNull String accountName, @NonNull String interval) {
-		
-		Optional<Setting> intervalTime = 
-			realtimeOpStatus.retrieveSetting(SettingKey.User_Track_Time);
-		
-		if(intervalTime.isPresent()) {
-			
-			return operatorsRepository.retrieveUserTrackHistory(
-				accountName, intervalTime.get().getValue()
-			);
-			
-		}else {
-			throw new ATCRuntimeException("User track time not found.",
-				new NoSuchElementException());
-		}
-		
+	public List<Controller> retrieveOOControllers() {
+		return realtimeOpStatus.retrieveAll(Controller.class);
 	}
+
 }

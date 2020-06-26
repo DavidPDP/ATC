@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.events.State;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 @Repository
 public class StatesRepository {
@@ -32,14 +34,23 @@ public class StatesRepository {
 		
 	public List<State> retrieveAll() {
 				
-		List<State> state = 
-			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/states", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<State>>() {}
-			).getBody();
+		List<State> states = null;
+		
+		try {
 			
-		return state;
+			states = 
+				blackboxApi.exchange(
+					blackboxEventManagmentApiURL + "/states", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<State>>() {}
+				).getBody();
+			
+		}catch (ResourceNotFound e) {
+			states = Collections.emptyList();
+		}
+			
+			
+		return states;
 		
 	}
 	

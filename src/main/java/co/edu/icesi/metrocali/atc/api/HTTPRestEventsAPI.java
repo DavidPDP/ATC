@@ -180,26 +180,24 @@ public class HTTPRestEventsAPI {
 	//---------------------------------------------
 	
 	//Retrive information -------------------------	
-	@GetMapping("/{authorName}/assigned_events")
-	public ResponseEntity<List<Event>> retrieveAssignedEvents(
-			@PathVariable String authorName) {
-			
-		List<Event> events = 
+	@GetMapping("/controllers/{authorName}/history")
+	public ResponseEntity<ComplexOutputMessage> history(
+		@PathVariable String authorName){
+		
+		List<Event> assignedEvents = 
 			eventService.retrieveAssignedEvents(authorName);
-		
-		return ResponseEntity.ok(events);
-			
-	}
-		
-	@GetMapping("/{authorName}/active_events")
-	public ResponseEntity<List<Event>> retrieveActiveEvents(
-			@PathVariable String authorName) {
-
-		List<Event> events = 
+		List<Event> activeEvents = 
 			eventService.retrieveActiveEvents(authorName);
 		
-		return ResponseEntity.ok(events);
-
+		ComplexOutputMessage outputBody = 
+			new ComplexOutputMessage();
+		
+		outputBody.addField("assignedEvents", assignedEvents);
+		outputBody.addField("activeEvents", activeEvents);
+		outputBody.addField("solvedEvents", null);
+		
+		return ResponseEntity.ok(outputBody);
+		
 	}
 	//---------------------------------------------
 	

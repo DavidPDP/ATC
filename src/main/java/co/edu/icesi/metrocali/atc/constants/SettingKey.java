@@ -4,6 +4,6 @@ public enum SettingKey {
 
 	Login_URL,
 	Recover_Time,
-	User_Track_Time
+	Query_Time_Window
 	
 }

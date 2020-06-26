@@ -12,6 +12,7 @@ import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
+import co.edu.icesi.metrocali.atc.exceptions.InvalidStateException;
 import co.edu.icesi.metrocali.atc.repositories.StatesRepository;
 import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
@@ -58,13 +59,14 @@ public class StatesService implements RecoveryService {
 		
 		if(shallow) {
 			//Shallow copy
-			states = realtimeOperationStatus.retrieveAllStates();
+			states = 
+				realtimeOperationStatus.retrieveAll(State.class);
 		}else {
 			//Deep copy
 			states = statesRepository.retrieveAll();
 			
 			//Update operation status
-			realtimeOperationStatus.updateStates(states);
+			realtimeOperationStatus.store(State.class, states);
 		}
 		
 		if(states.isEmpty()) {
@@ -82,7 +84,9 @@ public class StatesService implements RecoveryService {
 		State state = null;
 		
 		Optional<State> shallowState = 
-			realtimeOperationStatus.retrieveState(stateValue.name());
+			realtimeOperationStatus.retrieve(
+				State.class, stateValue.name()
+			);
 		
 		if(shallowState.isPresent()) {
 			//Shallow copy
@@ -92,11 +96,59 @@ public class StatesService implements RecoveryService {
 			state =	statesRepository.retrieve(stateValue.name());
 			
 			//Update operation status
-			realtimeOperationStatus.addOrUpdateState(state);
+			realtimeOperationStatus.store(State.class, state);
 		
 		}
 		
 		return state;
+		
+	}
+	
+	public void verifyNextState(State current, StateValue nextValue) {
+		
+		List<State> validStates = current.getNextStates();
+		
+		if(!canGoNextState(validStates, nextValue)) {
+			
+			String exceptionMessage = "";
+			String validStatesNames = "";
+			
+			validStates.forEach(
+				vs -> validStatesNames.concat(vs.getName() + " "));
+			
+			if(validStatesNames.isEmpty()) {
+				exceptionMessage = "no valid next status found. "
+					+ "This may mean that there is no rule "
+					+ "mapping for this current state. "
+					+ "Contact system admin.";
+			}else {
+				exceptionMessage = 
+					"It is not possible to go to the next state. "
+					+ "From the current state (" 
+					+ current.getName() + ") it can only "
+					+ "change to: " + validStatesNames 
+					+ " states.";
+			}
+			
+			throw new InvalidStateException(exceptionMessage);
+			
+		}
+		
+	}
+	
+	private boolean canGoNextState(List<State> possibleNextStates, 
+			StateValue nextState) {
+		
+		boolean isValidNextState = false;
+		
+		for (State state : possibleNextStates) {
+			if(nextState.name().equals(state.getName())) {
+				isValidNextState = true;
+				break;
+			}
+		}
+		
+		return isValidNextState;
 		
 	}
 	

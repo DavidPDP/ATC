@@ -27,10 +27,9 @@ public class RecoveryManager {
 		
 		for (RecoveryService rs : recoveryServices) {
 			
-			recoveryPoints.forEach(
-				rp -> rp.recoverypoint(
-					rs.getType(), rs.recoveryEntities())
-			);
+			for (RecoveryPoint rp : recoveryPoints) {
+				rp.recovery(rs.getType(), rs.recoveryEntities());
+			}
 			
 		}	
 		

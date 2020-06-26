@@ -12,7 +12,6 @@ import lombok.Setter;
 public class EventTrack {
 
 	//Constructors ---------------------------------
-	
 	public EventTrack() {}
 	
 	public EventTrack(Integer priority, Controller user,
@@ -47,6 +46,7 @@ public class EventTrack {
 	
 	//Aggregates methods ---------------------------
 	public void addEventRemark(EventRemark eventRemark) {
+		System.out.println("HOLA");
 		this.eventsRemarks.add(eventRemark);
 	}
 	//----------------------------------------------

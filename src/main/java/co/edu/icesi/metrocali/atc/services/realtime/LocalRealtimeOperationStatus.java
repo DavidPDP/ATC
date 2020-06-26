@@ -5,25 +5,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
-import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
-import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
-import co.edu.icesi.metrocali.atc.entities.events.Protocol;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.events.Step;
-import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
+import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import co.edu.icesi.metrocali.atc.services.recovery.RecoveryPoint;
 
@@ -32,7 +30,9 @@ import co.edu.icesi.metrocali.atc.services.recovery.RecoveryPoint;
  * real state. The collections are managed by the JVM 
  * and the key-value strategy is used for the retrieve of the 
  * instances.
- * @author <a href="mailto:johan.ballesteros@outlook.com">Johan Ballesteros</a>
+ * 
+ * @author <a href="mailto:
+ * johan.ballesteros@outlook.com">Johan Ballesteros</a>
  */
 @Service
 public class LocalRealtimeOperationStatus 
@@ -55,12 +55,6 @@ public class LocalRealtimeOperationStatus
 	private Map<String, List<Event>> controllersEvents; 
 	
 	private Map<String,Event> events;
-	//---------------------------------------
-	
-	//Tracks --------------------------------
-	private Map<String, List<UserTrack>> operatorTracks;
-	
-	private Map<String, List<EventTrack>> controllerEventTracks;
 	//---------------------------------------
 	
 	//Static entities -----------------------
@@ -88,9 +82,6 @@ public class LocalRealtimeOperationStatus
 		controllersEvents = new HashMap<>();
 		events = new HashMap<>();
 		
-		operatorTracks = new HashMap<>();
-		controllerEventTracks = new HashMap<>();
-		
 		states = new HashMap<>();
 		categories = new HashMap<>();
 		settings = new HashMap<>();
@@ -99,348 +90,301 @@ public class LocalRealtimeOperationStatus
 		
 	}
 	
-	//Recover Methods --------------------------------
+	//Recover Method --------------------------------
 	@Override
-	public <T extends Recoverable> void recoverypoint(
+	public <T extends Recoverable> void recovery(
 			Class<T> type, List<Recoverable> entities) {
 		
-		Map<String, T> entityCollection = resolve(type);
-	
-		entityCollection.clear();
-
-		System.out.println(type.getName());
-		for (Recoverable recoverable : entities) {
-			System.out.println(recoverable.getKeyEntity());
-			entityCollection.put(
-				recoverable.getKeyEntity(), 
-				type.cast(recoverable)
-			);
+		if(!entities.isEmpty()) {
 			
+			Map<String, T> entityCollection = resolve(type);
+
+			for (Recoverable recoverable : entities) {
+				
+				entityCollection.put(
+					recoverable.getKeyEntity(), 
+					type.cast(recoverable)
+				);
+				
+			}
 		}
 		
 	}
+	//------------------------------------------------
 	
+	/**
+	 * allows to find the collection that is used to store 
+	 * the entities of the type passed by parameter.<br><br>
+     * <b>Note:</b> The uncheked warning is suppressed because the 
+     * generic type cannot be statically related to the specific
+     * type of the collection. But it should be noted that there 
+     * is no heap pollution because with the verifications makes 
+     * sure to deliver the corresponding type of collection 
+     * avoiding the ClassCastException.
+	 * @param type with the class of the entity that 
+	 * stores the collection.
+	 * @return the collection that stores the entity type.
+	 */
 	@SuppressWarnings("unchecked")
-	private <T> Map<String, T> resolve(Class<T> type) {
+	private <T extends Recoverable> Map<String, T> 
+		resolve(Class<T> type) {
 		
 		Map<String, T> entityCollection = 
 			Collections.emptyMap();
 		
-		if(type.getName().equals(Setting.class.getName())) {
+		if(Setting.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió settings");
 			entityCollection = (Map<String, T>) settings;
-		}else if(type.getName().equals(Event.class.getName())) {
+		}else if(Event.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió events");
 			entityCollection = (Map<String, T>) events;
-		}else if(type.getName().equals(Category.class.getName())) {
+		}else if(Category.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió categorías");
 			entityCollection = (Map<String, T>) categories;
-		}else if(type.getName().equals(State.class.getName())) {
+		}else if(State.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió states");
 			entityCollection = (Map<String, T>) states;
-		}else if(type.getName().equals(Step.class.getName())) {
+		}else if(Step.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió steps");
 			entityCollection = (Map<String, T>) steps;
+		}else if(Controller.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió controllers");
+			entityCollection = (Map<String, T>) controllers;
+		}else if(Omega.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió omegas");
+			entityCollection = (Map<String, T>) omegas;
+		}else if(Role.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió roles");
+			entityCollection = (Map<String, T>) roles;
+		}else if(User.class.isAssignableFrom(type)) {
+			System.out.println("Se elegigió operators");
+			entityCollection = (Map<String, T>) operators;
+		}else {
+			
+			throw new ATCRuntimeException(
+				"There is no collection that supports that "
+				+ "entity type."
+			);
+			
 		}
 		
 		return entityCollection;
 		
 	}
-	//------------------------------------------------
+	
+	@SuppressWarnings("unchecked")
+	private <T extends Recoverable, V extends Recoverable> 
+		Map<String, ? extends List<V>> resolveList(
+				Class<T> keyType, Class<V> valueType){
 		
-	//Add and update operation status methods --------
+		Map<String, ? extends List<V>> entityListCollection
+			= Collections.emptyMap();
+		
+		if(Controller.class.isAssignableFrom(keyType) && 
+				Event.class.isAssignableFrom(valueType)) {
+			entityListCollection = 
+				(Map<String, ? extends List<V>>) controllersEvents;
+		}else {
+			throw new ATCRuntimeException(
+				"There is no collection that supports that "
+				+ "key and entity type."
+			);
+		}
+		
+		return entityListCollection; 
+		
+	}
 	
-	
-	
-	
+	private <T extends Recoverable> void print(Map<String, T> col) {
+		for (T e : col.values()) {
+			System.out.println(e.getKeyEntity());
+		}
+	}
+
+	//CRUD entities-----------------------------------
 	@Override
-	public void assignEvent(Event event, String accountName) {
-		controllersEvents.computeIfAbsent(accountName, 
-			user -> new ArrayList<>()).add(event);
+	public <T extends Recoverable> void store(
+		Class<T> type, T entity) {
+		
+		Map<String, T> entityCollection = 
+			(Map<String, T>) resolve(type);
+		
+		entityCollection.put(entity.getKeyEntity(), entity);
+		
+		System.out.println("GUARDÓ...");
+		print(entityCollection);
+		
 	}
 	
 	@Override
-	public void updateSettings(List<Setting> settings) {
+	public <T extends Recoverable> void store(
+		Class<T> type, List<T> entities) {
 		
-		this.settings.clear();
+		Map<String, T> entityCollection = 
+			(Map<String, T>) resolve(type);
 		
-		for (Setting setting : settings) {
-			this.settings.put(setting.getKey(), setting);
+		for (T entity : entities) {
+			entityCollection.put(entity.getKeyEntity(), entity);
 		}
 		
 	}
 	
 	@Override
-	public void updateStates(List<State> states) {
-		
-		this.states.clear();
-		
-		for (State state : states) {
+	public <T extends Recoverable, V extends Recoverable> 
+		void storeToList(Class<T> keyType, T keyEntity, 
+			Class<V> valueType, V valueEntity) {
 			
-			this.states.put(state.getName(), state);
-
-		}
+		@SuppressWarnings("unchecked")
+		Map<String, List<V>> entityCollection = 
+			(Map<String, List<V>>) resolveList(keyType, valueType);
+		
+		entityCollection.computeIfAbsent(
+			keyEntity.getKeyEntity(), v -> new ArrayList<V>()
+		).add(valueEntity);
 		
 	}
 	
-	public void removeStep(String code) {
-		steps.remove(code);
-	}
-	
 	@Override
-	public void updateCategories(List<Category> categories) {
+	public <T extends Recoverable> List<T> 
+		retrieveAll(Class<T> type) {
+	
+		Map<String, T> entityCollection = 
+				(Map<String, T>) resolve(type);
 		
-		this.categories.clear();
+		return new ArrayList<T>(
+				entityCollection.values());
+	
+	}
+	
+	public <T extends Recoverable> Optional<T> retrieve(
+			Class<T> type, String entityKey) {
 		
-		for (Category category : categories) {
-			this.categories.put(category.getName(), category);
-		}
+		Map<String, T> entityCollection = 
+				(Map<String, T>) resolve(type);
 		
-	}
-	
-	public void addOperator(User operator) {
-		operators.put(operator.getAccountName(), operator);
-	}
-	
-	public void removeOperator(String accountName) {
-		operators.remove(accountName);
-	}
-	
-	public List<Role> retrieveRoles(){
-		return new ArrayList<>(roles.values());
-	}
-	
-	public void persistRole(Role role) {
-		roles.put(role.getName(), role);
-	}
-	
-	public void removeRole(String name) {
-		roles.remove(name);
-	}
-	
-//	public List<?> retrieve(Class<?> type) {
-//		
-//		Map<?,?> entityMap = resolveType(type);
-//		
-//		return new ArrayList<>(entityMap.values());
-//		
-//	}
-//		
-//	private Map<?,?> resolveType(Class<?> type) {
-//		
-//		Map<?,?> entityMap = Collections.emptyMap();
-//		
-//		if(type.isInstance(Role.class)) {
-//			entityMap = roles;
-//		}
-//		
-//		return entityMap;
-//	}
-	
-	public void addOrUpdateStep(Step step) {
-		steps.put(step.getCode(), step);
-	}
-	
-	public void updateSteps(List<Step> steps) {
-		for (Step step : steps) {
-			this.steps.put(step.getCode(), step);
-		}
-	}
-	
-	public Optional<Step> retrieveStep(String code) {
-		return Optional.ofNullable(steps.get(code));
-	}
-	
-	@Override
-	public boolean addOrUpdateController(Controller controller) {
-		controllers.put(controller.getAccountName(), controller);
-		return true;
-	}
-	
-	public void removeController(@NonNull String accountName) {
-		controllers.remove(accountName);
-	}
-	
-	public void addOrUpdateOmega(Omega omega) {
-		omegas.put(omega.getAccountName(), omega);
-	}
-	
-	public void removeOmega(@NonNull String accountName) {
-		omegas.remove(accountName);
-	}
-	
-	public void removeCategory(String name) {
-		categories.remove(name);
-	}
-	
-	public void removeSetting(String key) {
-		settings.remove(key);
-	}
-	
-	public void addOrUpdateSetting(Setting setting) {
-		settings.put(setting.getKey(), setting);
-	}
-	
-	@Override
-	public boolean addOrUpdateCategory(Category category) {
-		categories.put(category.getName(), category);
-		return true;
-	}
-	
-	@Override
-	public boolean addOrUpdateState(State state) {
-		states.put(state.getName(), state);
-		return true;
-	}
-	
-	@Override
-	public boolean addOrUpdateEvent(Event event) {
-		events.put(event.getCode(), event);
-		return true;
-	}
-	
-	//------------------------------------------------
-	
-	//Retrieve methods -------------------------------
-	@Override
-	public List<Setting> retrieveAllSettings(){
-		return (List<Setting>) settings.values();
-	}
-	
-	@Override
-	public Optional<Setting> retrieveSetting(@NonNull SettingKey setting) {
-		return Optional.ofNullable(
-			this.settings.get(setting.name())
-		);
-	}
-	
-	@Override
-	public List<User> retrieveAllControllers(){
-		return new ArrayList<>(controllers.values());
-	}
-	
-	@Override
-	public List<Omega> retrieveAllOmegas(){
-		return new ArrayList<>(omegas.values());
-	}
-	
-	public Optional<User> retrieveOperator(String accountName) {
-		return Optional.ofNullable(operators.get(accountName));
-	}
-	
-	@Override
-	public Optional<Controller> retrieveController(String accountName) {
-		return Optional.ofNullable(controllers.getOrDefault(accountName, null));
-	}
-	
-	public Optional<Omega> retrieveOmega(String accountName) {
-		return Optional.ofNullable(omegas.getOrDefault(accountName, null));
-	}
-	
-	@Override
-	public Optional<Event> retrieveEvent(String eventCode) {
-		return Optional.ofNullable(events.get(eventCode));
-	}
-	
-	@Override
-	public List<Event> retrieveEventsByStates(String accountName, 
-			List<String> states) {
-		if(controllersEvents.isEmpty()) {
-			return Collections.emptyList();
-		}else {
-			return controllersEvents.get(accountName)
-				.stream()
-				.filter(event -> states.contains(
-					event.getLastEventTrack().getState().getName()
-				))
-				.collect(Collectors.toList());
-		}
-	}
-	
-	/**
-	 * Retrieves all loaded user states.
-	 * @return {@link List} with all loaded user states.
-	 */
-	@Override
-	public List<State> retrieveAllStates() {
-		if(states.isEmpty()) {
-			return Collections.emptyList();
-		}else {
-			return new ArrayList<State>(states.values());
-		}
-	}
-	
-	/**
-	 * Retrieves a specific user state that previously loaded.
-	 * @param name the user state's business identifier.
-	 * @return {@link Optional} with the specific user state searched.
-	 */
-	@Override
-	public Optional<State> retrieveState(String name) {
-		return Optional.of(states.get(name));
-	}
-	
-	/**
-	 * Retrieves all loaded categories.
-	 * @return {@link List} with all loaded categories.
-	 */
-	@Override
-	public List<Category> retrieveAllCategories(){
-		if(categories.isEmpty()) {
-			return Collections.emptyList();
-		}else {
-			return new ArrayList<>(categories.values());
-		}
-	}
-	
-	/**
-	 * Retrieves a specific category that previously loaded.
-	 * @param name the category's business identifier.
-	 * @return {@link Optional} with the specific category searched.
-	 */
-	@Override
-	public Optional<Category> retrieveCategory(@NonNull String name) {
-		return Optional.of(categories.get(name));
-	}
-
-	@Override
-	public Optional<Protocol> retrieveProtocolStep(@NonNull String eventCode,
-			@NonNull String stepName) {
-		System.out.println("PASO: " + stepName);
-		Category category = events.get(eventCode).getCategory();
-		System.out.println("CATEGORY: " + category);
-		List<Protocol> protocols = category.getProtocols();
+		T entity = entityCollection.get(entityKey);
 		
-		return protocols.stream()
-				.filter(p -> p.getStep().getDescription().equals(stepName))
-				.findAny();
+		return Optional.ofNullable(entity);
 		
 	}
 	
-	public List<Step> retrieveAllSteps() {
-		return new ArrayList<>(steps.values());
+	@Override
+	public <T extends Recoverable> T remove(
+			Class<T> type, String entityKey) {
+	
+		Map<String, T> entityCollection = 
+				(Map<String, T>) resolve(type);
+		
+		return entityCollection.remove(entityKey);
+	
 	}
 	
-	//------------------------------------------------
-	
-	public void print() {
-		for (Map.Entry<String,Event> mevent : this.events.entrySet()) {
-			for (EventTrack track : mevent.getValue().getEventsTracks()) {
-				System.out.println(track.getCode());
+	@Override
+	public <T extends Recoverable> List<T> filter(
+			Class<T> type, String ... filters) {
+		
+		List<T> entitiesToFind = new ArrayList<>();
+		
+		//Retrieve concrete collection
+		Map<String, T> entityCollection = 
+				(Map<String, T>) resolve(type);
+		
+		//Retrieve filters patterns 
+		Pattern[] patterns = createPatterns(filters);
+		
+		//Adds entities that match the pattern
+		for (T entity : entityCollection.values()) {
+			
+			String entityFormat = entity.toString();
+			
+			if(hasPattern(entityFormat, patterns)) {
+				entitiesToFind.add(entity);
 			}
+			
 		}
-//		System.out.println("Controller: ------------------");
-//		for (Controller controller : controllers.values()) {
-//			System.out.println(controller.getAccountName());
-//		}
-//		System.out.println("Controller Events: -------------");
-//		for (Map.Entry<String, List<Event>> entry: 
-//			controllersEvents.entrySet()) {
-//			System.out.println(entry.getKey());
-//			for (Event event : entry.getValue()) {
-//				System.out.println(event.getCode());
-//				System.out.println(event.getLastEventTrack().getState().getName());
-//				System.out.println("Track: ");
-//				for (EventTrack track : event.getEventsTracks()) {
-//					System.out.println(track.getId());
-//				}
-//			}
-//		}
+		
+		//Formats output
+		if(entitiesToFind.isEmpty()) {
+			entitiesToFind = Collections.emptyList();
+		}
+		
+		return entitiesToFind;
+		
+	}
+	
+	private Pattern[] createPatterns(String ... filters) {
+		
+		String splitChar = "=";
+		Map<String, List<String>> fieldsMap = new HashMap<>();
+		
+		//Groups the values ​​with the same field
+		for (String filter : filters) {
+			
+			String[] filterValues = filter.split(splitChar);
+			String field = filterValues[0];
+			String value = filterValues[1];
+			
+			fieldsMap.computeIfAbsent(
+				field, values -> new ArrayList<String>()
+			).add(value);
+			
+		}
+		
+		Pattern[] patterns = new Pattern[fieldsMap.size()];
+		
+		//Creates each pattern
+		int patternIndex = 0;
+		for (Entry<String, List<String>> entry : 
+			fieldsMap.entrySet()) {
+			
+			String pattern = 
+				buildPattern(entry.getKey(), entry.getValue());
+			
+			patterns[patternIndex] = Pattern.compile(pattern);
+			patternIndex++;
+			
+		}
+		
+		return patterns;
+		
+	}
+	
+	private String buildPattern(
+			String field, List<String> values) {
+		
+		StringBuilder pattern = new StringBuilder();
+		String splitChar = "=";
+		
+		pattern.append(field + splitChar + "(");
+		
+		for (String value : values) {
+			pattern.append(value + "|");
+		}
+		
+		pattern.setLength(pattern.length() - 1);
+		pattern.append(")");
+		
+		return pattern.toString();
+		
+	}
+	
+	private boolean hasPattern(String input, Pattern[] patterns) {
+		
+		boolean satisfacePatterns = true;
+		
+		for (Pattern pattern : patterns) {
+			
+			Matcher matcher = pattern.matcher(input);
+			
+			if(!matcher.matches()) {
+				satisfacePatterns = false;
+				break;
+			}
+			
+		}
+		
+		return satisfacePatterns;
+		
 	}
 	
 	

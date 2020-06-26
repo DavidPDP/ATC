@@ -3,6 +3,7 @@ package co.edu.icesi.metrocali.atc.entities.operators;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
+import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +14,8 @@ public class Controller extends User implements Comparable<Controller>{
 	
 	private static final long serialVersionUID = -6288917867363076425L;
 
+	private Event lastEvent;
+	
 	@JsonIgnore
 	private Integer workLoad = 0;
 	

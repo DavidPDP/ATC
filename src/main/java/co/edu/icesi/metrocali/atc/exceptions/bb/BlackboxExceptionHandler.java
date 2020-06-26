@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.exceptions.bb;
 
 import java.io.IOException;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.HttpClientErrorException;
@@ -22,11 +23,19 @@ public class BlackboxExceptionHandler
 			super.handleError(response);
 		}catch(HttpClientErrorException e) {
 			
-			BadRequestException newException =
-				new BadRequestException(
+			ExternalApiResponseException newException = null;
+			
+			if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+				newException = new ResourceNotFound(
+					"the resource is not persisted.",
+					e, e.getStatusCode()
+				);
+			}else {
+				newException = new BadRequestException(
 					"the request could not be completed.", 
 					e, e.getStatusCode()
-			);
+				);
+			}
 			
 			//log.error("", newException);
 			throw newException;

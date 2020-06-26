@@ -62,7 +62,8 @@ public class SettingsService implements RecoveryService {
 		List<Setting> settings = Collections.emptyList();
 		
 		if(shallow) {
-			settings = realtimeOperationStatus.retrieveAllSettings();
+			settings = 
+				realtimeOperationStatus.retrieveAll(Setting.class);
 		}else {
 			settings = settingsRepository.retrieveAll();
 		}
@@ -82,7 +83,9 @@ public class SettingsService implements RecoveryService {
 	public Setting retrieve(SettingKey key) {
 		
 		Optional<Setting> setting = 
-				realtimeOperationStatus.retrieveSetting(key);
+			realtimeOperationStatus.retrieve(
+				Setting.class, key.name()
+			);
 		
 		if(setting.isPresent()) {
 			//Shallow strategy
@@ -96,17 +99,19 @@ public class SettingsService implements RecoveryService {
 	
 	public void save(Setting setting) {
 		
-		Setting persistedSetting = settingsRepository.save(setting);
+		Setting persistedSetting = 
+				settingsRepository.save(setting);
 		
 		//Update operation status
-		realtimeOperationStatus.addOrUpdateSetting(persistedSetting);
+		realtimeOperationStatus.store(
+				Setting.class, persistedSetting);
 		
 	}
 	
 	public void delete(String key) {
 
 		//Update operation status
-		realtimeOperationStatus.removeSetting(key);
+		realtimeOperationStatus.remove(Setting.class, key);
 		
 		settingsRepository.delete(key);
 

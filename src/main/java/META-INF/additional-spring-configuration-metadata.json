@@ -1,12 +1,12 @@
 {"properties": [
   {
-    "name": "mom.aviom.jms.queue.access.input",
+    "name": "blackbox.apis.policies",
     "type": "java.lang.String",
-    "description": "A description for 'mom.aviom.jms.queue.access.input'"
+    "description": "A description for 'blackbox.apis.policies'"
   },
   {
-    "name": "mom.aviom.jms.queue.access.output",
+    "name": "blackbox.apis.event_managment",
     "type": "java.lang.String",
-    "description": "A description for 'mom.aviom.jms.queue.access.output'"
+    "description": "A description for 'blackbox.apis.event_managment'"
   }
 ]}

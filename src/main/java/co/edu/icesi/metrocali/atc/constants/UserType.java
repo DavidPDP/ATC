@@ -1,6 +1,6 @@
 package co.edu.icesi.metrocali.atc.constants;
 
-public enum OperatorType {
+public enum UserType {
 
 	Controller,
 	Omega,

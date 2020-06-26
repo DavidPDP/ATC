@@ -57,13 +57,14 @@ public class StepsService implements RecoveryService {
 		
 		if(shallow) {
 			//Shallow copy
-			states = realtimeOperationStatus.retrieveAllSteps();
+			states = 
+				realtimeOperationStatus.retrieveAll(Step.class);
 		}else {
 			//Deep copy
 			states = stepsRepository.retrieveAll();
 			
 			//Update operation status
-			realtimeOperationStatus.updateSteps(states);
+			realtimeOperationStatus.store(Step.class, states);
 		}
 		
 		if(states.isEmpty()) {
@@ -81,7 +82,7 @@ public class StepsService implements RecoveryService {
 		Step step = null;
 		
 		Optional<Step> shallowState = 
-			realtimeOperationStatus.retrieveStep(code);
+			realtimeOperationStatus.retrieve(Step.class, code);
 		
 		if(shallowState.isPresent()) {
 			//Shallow copy
@@ -91,7 +92,7 @@ public class StepsService implements RecoveryService {
 			step =	stepsRepository.retrieve(code);
 			
 			//Update operation status
-			realtimeOperationStatus.addOrUpdateStep(step);
+			realtimeOperationStatus.store(Step.class, step);
 		
 		}
 		
@@ -106,14 +107,14 @@ public class StepsService implements RecoveryService {
 		
 		//Update operation state
 		realtimeOperationStatus
-			.addOrUpdateStep(persistedStep);
+			.store(Step.class, persistedStep);
 		
 	}
 	
 	public void delete(String code) {
 		
 		//Update operation state
-		realtimeOperationStatus.removeStep(code);
+		realtimeOperationStatus.remove(Step.class, code);
 		
 		stepsRepository.delete(code);
 		

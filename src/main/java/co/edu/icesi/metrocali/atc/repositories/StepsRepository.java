@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.repositories;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.events.Step;
+import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
 @Repository
 public class StepsRepository {
@@ -32,12 +34,20 @@ public class StepsRepository {
 		
 	public List<Step> retrieveAll() {
 				
-		List<Step> steps = 
-			blackboxApi.exchange(
-				blackboxEventManagmentApiURL + "/steps", 
-				HttpMethod.GET, null, 
-				new ParameterizedTypeReference<List<Step>>() {}
-			).getBody();
+		List<Step> steps = null;
+		
+		try {
+		
+			steps = 
+				blackboxApi.exchange(
+					blackboxEventManagmentApiURL + "/steps", 
+					HttpMethod.GET, null, 
+					new ParameterizedTypeReference<List<Step>>() {}
+				).getBody();
+			
+		}catch(ResourceNotFound e) {
+			steps = Collections.emptyList();
+		}
 			
 		return steps;
 		

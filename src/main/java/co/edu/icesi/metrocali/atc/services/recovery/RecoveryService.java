@@ -4,6 +4,12 @@ import java.util.List;
 
 import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 
+/**
+ * 
+ * 
+ * @author <a href="mailto:
+ * johan.ballesteros@outlook.com">Johan Ballesteros</a>
+ */
 public interface RecoveryService {
 
 	public Class<? extends Recoverable> getType();

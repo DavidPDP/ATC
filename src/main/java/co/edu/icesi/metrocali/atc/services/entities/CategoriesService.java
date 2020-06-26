@@ -64,7 +64,8 @@ public class CategoriesService implements RecoveryService {
 		List<Category> categories = Collections.emptyList();
 		
 		if(shallow) {
-			categories = realtimeOperationStatus.retrieveAllCategories();
+			categories = 
+				realtimeOperationStatus.retrieveAll(Category.class);
 		}else {
 			categories = categoriesRepository.retrieveAll();
 		}
@@ -89,7 +90,7 @@ public class CategoriesService implements RecoveryService {
 	public Category retrieve(String name) {
 		
 		Optional<Category> category = 
-				realtimeOperationStatus.retrieveCategory(name);
+			realtimeOperationStatus.retrieve(Category.class, name);
 		
 		if(category.isPresent()) {
 			//shallow copy
@@ -106,7 +107,9 @@ public class CategoriesService implements RecoveryService {
 			
 			String stepCode = protocol.getStep().getCode();
 			Optional<Step> step = 
-				realtimeOperationStatus.retrieveStep(stepCode);
+				realtimeOperationStatus.retrieve(
+					Step.class, stepCode
+				);
 			
 			if(step.isPresent()) {
 				protocol.setStep(step.get());
@@ -121,8 +124,8 @@ public class CategoriesService implements RecoveryService {
 				categoriesRepository.save(category);
 		
 		//Update operation state
-		realtimeOperationStatus
-			.addOrUpdateCategory(persistedCategory);
+		realtimeOperationStatus.store(
+				Category.class, persistedCategory);
 		
 	}
 	
@@ -135,7 +138,7 @@ public class CategoriesService implements RecoveryService {
 	public void delete(String name) {
 		
 		//Update operation state
-		realtimeOperationStatus.removeCategory(name);
+		realtimeOperationStatus.remove(Category.class, name);
 		
 		categoriesRepository.delete(name);
 		
