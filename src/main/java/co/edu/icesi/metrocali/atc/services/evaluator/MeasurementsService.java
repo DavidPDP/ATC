@@ -1,6 +1,5 @@
 package co.edu.icesi.metrocali.atc.services.evaluator;
 
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
