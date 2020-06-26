@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 
 @Repository
-public class EvalParameterRepository extends EvaluatorRepository {
+public class EvalParametersRepository extends EvaluatorRepository {
 
     private static final String PARAMETERS_URL = "/parameters";
     private static final String NAME_PARAM = "name";
@@ -20,7 +20,7 @@ public class EvalParameterRepository extends EvaluatorRepository {
     private static final String ENABLE_UNTIL_PARAM = "enable_until";
     private static final String ACTIVE_PARAM = "active";
 
-    public EvalParameterRepository(@Qualifier("blackboxApi") RestTemplate blackboxApi,
+    public EvalParametersRepository(@Qualifier("blackboxApi") RestTemplate blackboxApi,
             @Value("${blackbox.apis.evaluator}") String blackboxEvaluatorApiURL) {
         super(blackboxApi, blackboxEvaluatorApiURL);
     }

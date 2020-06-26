@@ -25,7 +25,7 @@ public class EvalParametersService {
                     null, PERIODICITY_NAME, -1);
 
     @Autowired
-    private co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParameterRepository parameterRepository;
+    private co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository parameterRepository;
 
     private EvalParameter parameter;
 
