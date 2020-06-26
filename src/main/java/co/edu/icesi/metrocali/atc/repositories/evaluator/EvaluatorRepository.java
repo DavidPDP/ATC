@@ -4,9 +4,9 @@ package co.edu.icesi.metrocali.atc.repositories.evaluator;
 import org.springframework.web.client.RestTemplate;
 
 public abstract class EvaluatorRepository {
-    private RestTemplate blackboxApi;
+    RestTemplate blackboxApi;
 
-    private String blackboxEvaluatorApiURL;
+    String blackboxEvaluatorApiURL;
 
     public EvaluatorRepository(RestTemplate blackboxApi, String blackboxEvaluatorApiURL) {
 
