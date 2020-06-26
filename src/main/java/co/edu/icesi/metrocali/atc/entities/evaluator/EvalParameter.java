@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.entities.evaluator;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,4 +30,12 @@ public class EvalParameter {
 
 	private double value;
 
+	public EvalParameter(Date enableStart, Date enableEnd, String name, int value) {
+		this.enableStart = enableStart;
+		this.enableEnd = enableEnd;
+		this.name = name;
+		this.value = value;
+	}
 }
+
+
