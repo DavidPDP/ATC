@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.services.evaluator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +22,38 @@ public class VariableService {
     private FormulasRepository formulasRepository;
 
 
-    //TODO: En todos los getters se debe hacer el attacg de last formula. Ya sea que se deba consultar a back o que se configure el back para que la traiga tal cual.
+    // TODO: En todos los getters se debe hacer el attacg de last formula. Ya sea que se deba
+    // consultar a back o que se configure el back para que la traiga tal cual.
     public Optional<Variable> getVariable(String name) {
-        return variableRepository.retrieveByName(name);
+
+        Optional<Formula> formulaWrapper = formulasRepository.retriveByVariable(name);
+        Variable variable = null;
+        if (formulaWrapper.isPresent()) {
+            variable = formulaWrapper.get().getVariable();
+        }
+        return Optional.ofNullable(variable);
     }
 
     public List<Variable> getVariables() {
-        return variableRepository.retrieveAll();
+        List<Formula> formulas = formulasRepository.retrieveActives();
+        List<Variable> variables = new ArrayList<>();
+        for (Formula formula : formulas) {
+            Variable variable = formula.getVariable();
+            variable.setLastFormula(formula);
+            variables.add(variable);
+        }
+        return variables;
     }
 
     public List<Variable> getKPIs() {
-        return variableRepository.retrieveByIsKPI(true);
+        List<Formula> formulas = formulasRepository.retrieveActivesByKPI();
+        List<Variable> variables = new ArrayList<>();
+        for (Formula formula : formulas) {
+            Variable variable = formula.getVariable();
+            variable.setLastFormula(formula);
+            variables.add(variable);
+        }
+        return variables;
     }
 
     public Optional<Variable> saveVariable(String name, String classification, String description,
