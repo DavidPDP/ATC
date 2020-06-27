@@ -88,7 +88,7 @@ public class HTTPRestVariablesAPI {
 
     }
 
-    @PutMapping(value = "/variables/{name}")
+    @PutMapping(value = "/{name}")
     public ResponseEntity<Variable> updateVariable(@RequestBody Variable variable)
             throws Exception {
 
