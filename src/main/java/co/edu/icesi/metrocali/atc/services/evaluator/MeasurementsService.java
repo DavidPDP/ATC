@@ -46,4 +46,8 @@ public class MeasurementsService {
 
         return measurementsRepository.retrieveLastMeasurements(variable);
     }
+
+    public List<Measurement> saveMeasurements(List<Measurement> measurements) {
+        return measurementsRepository.saveAll(measurements);
+    }
 }
