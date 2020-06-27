@@ -22,7 +22,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
 
         private static final String ENABLE_FROM_PARAM = "enable_from";
         private static final String ENABLE_UNTIL_PARAM = "enable_until";
-        private static final String ACTIVE_PARAM = "active";
+
 
         public EvalParametersRepository(@Qualifier("blackboxApi") RestTemplate blackboxApi,
                         @Value("${blackbox.apis.evaluator}") String blackboxEvaluatorApiURL) {
@@ -73,7 +73,6 @@ public class EvalParametersRepository extends EvaluatorRepository {
 
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
-                uriBuilder.path(FILTERED_URL_PATH);
                 uriBuilder.queryParam(ENABLE_FROM_PARAM, start);
                 uriBuilder.queryParam(ENABLE_UNTIL_PARAM, end);
                 List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
@@ -96,8 +95,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
         public List<EvalParameter> retrieveActives() {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
-                uriBuilder.path(FILTERED_URL_PATH);
-                uriBuilder.queryParam(ACTIVE_PARAM, true);
+                uriBuilder.path(ACTIVE_URL_PATH);
 
                 List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.GET, null,
@@ -105,7 +103,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                                 }).getBody();
                 return parameters;
         }
-        
+
         public EvalParameter update(EvalParameter parameter) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
