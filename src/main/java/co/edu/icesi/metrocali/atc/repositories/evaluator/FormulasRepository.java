@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
 import org.springframework.stereotype.Repository;
 
@@ -33,31 +34,41 @@ public class FormulasRepository extends EvaluatorRepository {
     }
 
     public Optional<Formula> retriveByVariable(String name) {
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+        uriBuilder.pathSegment(name);
         Formula formula = blackboxApi
-                .exchange(blackboxEvaluatorApiURL + "/" + name, HttpMethod.GET, null, Formula.class)
-                .getBody();
+                .exchange(uriBuilder.toUriString(), HttpMethod.GET, null, Formula.class).getBody();
         return Optional.ofNullable(formula);
 
     }
 
     public List<Formula> retrieveActivesByKPI() {
-        List<Formula> formulas =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + FORMULAS_URL + KPI_URL + ACTIVE_URL,
-                        HttpMethod.GET, null, new ParameterizedTypeReference<List<Formula>>() {
-                        }).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+        uriBuilder.path(KPI_URL);
+        uriBuilder.path(ACTIVE_URL);
+        List<Formula> formulas = blackboxApi.exchange(uriBuilder.toUriString(), HttpMethod.GET,
+                null, new ParameterizedTypeReference<List<Formula>>() {
+                }).getBody();
         return formulas;
     }
 
     public Optional<Formula> save(Formula formula) {
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
         Formula newFormula = blackboxApi
-                .postForEntity(blackboxEvaluatorApiURL + FORMULAS_URL, formula, Formula.class)
-                .getBody();
+                .postForEntity(uriBuilder.toUriString(), formula, Formula.class).getBody();
         return Optional.ofNullable(newFormula);
     }
 
     public Optional<Formula> retrieveActivesByVariable(String name) {
-        Formula formula = blackboxApi.exchange(blackboxEvaluatorApiURL + "/" + name + ACTIVE_URL,
-                HttpMethod.GET, null, Formula.class).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+        uriBuilder.pathSegment(name);
+        uriBuilder.path(ACTIVE_URL);
+        Formula formula = blackboxApi
+                .exchange(uriBuilder.toUriString(), HttpMethod.GET, null, Formula.class).getBody();
         return Optional.ofNullable(formula);
     }
 
