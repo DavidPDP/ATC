@@ -108,10 +108,12 @@ public class EvalParametersService {
 
     public void updateParameterValue(final String parameterName, final Double value)
             throws Exception {
-
+        Date currentDate = Date.from(new Timestamp(System.currentTimeMillis()).toInstant());
         EvalParameter newParameter = new EvalParameter();
         newParameter.setName(parameterName);
         newParameter.setValue(value);
+        newParameter.setEnableStart(currentDate);
+        newParameter.setEnableEnd(null);
         parameterRepository.update(newParameter);
     }
 
