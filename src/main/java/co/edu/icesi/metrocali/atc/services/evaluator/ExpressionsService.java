@@ -7,8 +7,7 @@ import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.constants.NotificationType;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
@@ -21,8 +20,7 @@ import co.edu.icesi.metrocali.atc.services.notifications.NotificationManager;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
 
-@Component
-@EnableScheduling
+@Service
 public class ExpressionsService {
 
     @Autowired
