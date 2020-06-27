@@ -44,6 +44,23 @@ public class HTTPParametersAPI {
 
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<List<EvalParameter>> getActiveParameters()
+            throws Exception {
+
+        try {
+            List<EvalParameter> parameters = new ArrayList<>();
+
+            parameters = parametersService.getActiveParameters();
+
+            return ResponseEntity.ok().body(parameters);
+        } catch (Exception e) {
+            log.error("Error at GET /parameters", e);
+            throw e;
+        }
+
+    }
+
     @PutMapping(value = "/{parameterName}")
     public ResponseEntity<?> updateParameter(@PathVariable(required = true) String parameterName,
             @RequestBody(required = true) EvalParameter parameter) throws Exception {
