@@ -8,7 +8,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class FormulasRepository extends EvaluatorRepository {
 
     private static final String FORMULAS_URL = "/parameters";

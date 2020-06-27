@@ -13,7 +13,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
-
+import org.springframework.stereotype.Repository;
+@Repository
 public class MeasurementsRepository extends EvaluatorRepository {
 
     private static final String MEASUREMENTS_URL = "/measurements";
