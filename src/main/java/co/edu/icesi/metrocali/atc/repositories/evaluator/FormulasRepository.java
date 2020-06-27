@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class FormulasRepository extends EvaluatorRepository {
 
-    private static final String FORMULAS_URL = "/parameters";
+    private static final String FORMULAS_URL = "/formulas";
     private static final String KPI_URL = "/kpi";
     private static final String ACTIVE_URL = "/active";
 
