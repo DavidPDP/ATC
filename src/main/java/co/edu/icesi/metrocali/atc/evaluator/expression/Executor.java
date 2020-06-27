@@ -91,21 +91,25 @@ public class Executor {
     }
 
     // TODO: remove method and see expressionService.calculateVariables
-    public void temporalEvaluateKPI() {
+    public HashMap<String, Double> temporalEvaluateKPI() {
+        HashMap<String, Double> results = new HashMap<>();
         List<Variable> kpis = variables.getKPIs();
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Date currentDate = Date.from(now.toInstant());
         List<Measurement> measurements = new ArrayList<>();
         for (Variable variable : kpis) {
             Measurement measurement = new Measurement();
-            measurement.setValue(Math.random() * 100);
+            double value = Math.random() * 100;
+            measurement.setValue(value);
             measurement.setVariable(variable);
             measurements.add(measurement);
             measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
             measurement.setEndDate(currentDate);
+            results.put(variable.getNameVariable(), value);
         }
         measurementsService.saveMeasurements(measurements);
         LAST_EXECTUTION = now;
+        return results;
     }
 
     public Object evaluateExpression(String expression) {
