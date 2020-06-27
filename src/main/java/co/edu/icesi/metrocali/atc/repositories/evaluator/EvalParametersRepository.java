@@ -103,7 +103,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                                 }).getBody();
                 return parameters;
         }
-
+        
         public EvalParameter update(EvalParameter parameter) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
