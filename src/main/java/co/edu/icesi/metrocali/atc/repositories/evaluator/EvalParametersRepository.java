@@ -1,7 +1,7 @@
 package co.edu.icesi.metrocali.atc.repositories.evaluator;
 
 import java.util.Date;
-import java.util.HashMap;
+
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,13 +9,16 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 
 @Repository
 public class EvalParametersRepository extends EvaluatorRepository {
 
     private static final String PARAMETERS_URL = "/parameters";
-    private static final String NAME_PARAM = "name";
+    private static final String ACTIVE_URL_PATH = "/active";
+    private static final String FILTERED_URL_PATH = "/filtered";
+
     private static final String ENABLE_FROM_PARAM = "enable_from";
     private static final String ENABLE_UNTIL_PARAM = "enable_until";
     private static final String ACTIVE_PARAM = "active";
@@ -25,46 +28,55 @@ public class EvalParametersRepository extends EvaluatorRepository {
         super(blackboxApi, blackboxEvaluatorApiURL);
     }
 
-    public EvalParameter retrieveByName(String name, boolean active) {
-        HashMap<String, Object> uriParams = new HashMap<>();
-        uriParams.put(NAME_PARAM, name);
-        uriParams.put(ACTIVE_PARAM, active);
-        EvalParameter parameter = blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL,
-                HttpMethod.GET, null, EvalParameter.class, uriParams).getBody();
+    public EvalParameter retrieveActiveByName(String name) {
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        uriBuilder.pathSegment(name);
+        uriBuilder.path(ACTIVE_URL_PATH);
+
+        System.out.println("GG" + uriBuilder.toUriString());
+        EvalParameter parameter = blackboxApi
+                .exchange(uriBuilder.toUriString(), HttpMethod.GET, null, EvalParameter.class)
+                .getBody();
         return parameter;
     }
 
     public List<EvalParameter> retrieveByName(String name, Date start, Date end) {
 
-        HashMap<String, Object> uriParams = new HashMap<>();
-        uriParams.put(NAME_PARAM, name);
-        uriParams.put(ENABLE_FROM_PARAM, start);
-        uriParams.put(ENABLE_UNTIL_PARAM, end);
-        List<EvalParameter> parameters =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<List<EvalParameter>>() {
-                        }, uriParams).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        uriBuilder.path(name);
+        uriBuilder.path(FILTERED_URL_PATH);
+        uriBuilder.queryParam(ENABLE_FROM_PARAM, name);
+        uriBuilder.queryParam(ENABLE_UNTIL_PARAM, end);
+        List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<EvalParameter>>() {
+                }).getBody();
         return parameters;
     }
 
     public List<EvalParameter> retrieveByName(String name) {
-        HashMap<String, Object> uriParams = new HashMap<>();
-        uriParams.put(NAME_PARAM, name);
-        List<EvalParameter> parameters =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<List<EvalParameter>>() {
-                        }, uriParams).getBody();
+
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        uriBuilder.path(name);
+
+        List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<EvalParameter>>() {
+                }).getBody();
         return parameters;
     }
 
     public List<EvalParameter> retrieveBetweenDates(Date start, Date end) {
-        HashMap<String, Object> uriParams = new HashMap<>();
-        uriParams.put(ENABLE_FROM_PARAM, start);
-        uriParams.put(ENABLE_UNTIL_PARAM, end);
-        List<EvalParameter> parameters =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<List<EvalParameter>>() {
-                        }, uriParams).getBody();
+
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        uriBuilder.path(FILTERED_URL_PATH);
+        uriBuilder.queryParam(ENABLE_FROM_PARAM, start);
+        uriBuilder.queryParam(ENABLE_UNTIL_PARAM, end);
+        List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<EvalParameter>>() {
+                }).getBody();
         return parameters;
     }
 
@@ -77,12 +89,13 @@ public class EvalParametersRepository extends EvaluatorRepository {
     }
 
     public List<EvalParameter> retrieveActives() {
-        HashMap<String, Object> uriParams = new HashMap<>();
-        uriParams.put(ACTIVE_PARAM, true);
-        List<EvalParameter> parameters =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<List<EvalParameter>>() {
-                        }, uriParams).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        uriBuilder.queryParam(ACTIVE_PARAM, true);
+
+        List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<EvalParameter>>() {
+                }).getBody();
         return parameters;
     }
 
