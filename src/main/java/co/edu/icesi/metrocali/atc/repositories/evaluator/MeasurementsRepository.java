@@ -2,7 +2,6 @@ package co.edu.icesi.metrocali.atc.repositories.evaluator;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,9 +10,11 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
 import org.springframework.stereotype.Repository;
+
 @Repository
 public class MeasurementsRepository extends EvaluatorRepository {
 
@@ -39,67 +40,73 @@ public class MeasurementsRepository extends EvaluatorRepository {
     }
 
     public List<Measurement> saveAll(List<Measurement> measurements) {
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + MEASUREMENTS_URL);
         HttpEntity<List<Measurement>> requestEntity =
                 new HttpEntity<List<Measurement>>(measurements);
         List<Measurement> newMeasurements =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + MEASUREMENTS_URL, HttpMethod.POST,
-                        requestEntity, new ParameterizedTypeReference<List<Measurement>>() {
+                blackboxApi.exchange(uriBuilder.toUriString(), HttpMethod.POST, requestEntity,
+                        new ParameterizedTypeReference<List<Measurement>>() {
                         }).getBody();
         return newMeasurements;
     }
 
     public List<Measurement> retrieveByVariableAndBetweenDates(Variable variable, Date start,
             Date end) {
-        HashMap<String, Object> uriVariables = new HashMap<>();
-        uriVariables.put(NAMES_PARAM, variable.getNameVariable());
-        uriVariables.put(START_DATE_PARAM, start);
-        uriVariables.put(END_DATE_PARAM, end);
 
-        List<Measurement> measurements =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + MEASUREMENTS_URL, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Measurement>>() {
-                        }, uriVariables).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + MEASUREMENTS_URL);
+        uriBuilder.queryParam(NAMES_PARAM, variable.getNameVariable());
+        uriBuilder.queryParam(START_DATE_PARAM, start);
+        uriBuilder.queryParam(END_DATE_PARAM, end);
+
+        List<Measurement> measurements = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<Measurement>>() {
+                }).getBody();
 
         return measurements;
     }
 
     public List<Measurement> retrieveLastMeasurements(Variable variable) {
-        HashMap<String, Object> uriVariables = new HashMap<>();
-        uriVariables.put(NAMES_PARAM, variable.getNameVariable());
-        uriVariables.put(LAST_PARAM, true);
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + MEASUREMENTS_URL);
+        uriBuilder.queryParam(NAMES_PARAM, variable.getNameVariable());
+        uriBuilder.queryParam(LAST_PARAM, true);
 
-        List<Measurement> measurements =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + MEASUREMENTS_URL, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Measurement>>() {
-                        }, uriVariables).getBody();
+
+        List<Measurement> measurements = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<Measurement>>() {
+                }).getBody();
         return measurements;
     }
 
     public List<Measurement> retrieveByVariableAndBetweenDates(List<String> variablesNames,
             Date start, Date end) {
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + MEASUREMENTS_URL);
+        uriBuilder.queryParam(NAMES_PARAM, variablesNames);
+        uriBuilder.queryParam(START_DATE_PARAM, start);
+        uriBuilder.queryParam(END_DATE_PARAM, end);
 
-        HashMap<String, Object> uriVariables = new HashMap<>();
-        uriVariables.put(NAMES_PARAM, variablesNames);
-        uriVariables.put(START_DATE_PARAM, start);
-        uriVariables.put(END_DATE_PARAM, end);
 
-        List<Measurement> measurements =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + MEASUREMENTS_URL, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Measurement>>() {
-                        }, uriVariables).getBody();
+
+        List<Measurement> measurements = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<Measurement>>() {
+                }).getBody();
 
         return measurements;
     }
 
     public List<Measurement> retrieveLastMeasurements(List<String> variablesNames) {
-        HashMap<String, Object> uriVariables = new HashMap<>();
-        uriVariables.put(NAMES_PARAM, variablesNames);
-        uriVariables.put(LAST_PARAM, true);
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + MEASUREMENTS_URL);
+        uriBuilder.queryParam(NAMES_PARAM, variablesNames);
+        uriBuilder.queryParam(LAST_PARAM, true);
 
-        List<Measurement> measurements =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + MEASUREMENTS_URL, HttpMethod.GET,
-                        null, new ParameterizedTypeReference<List<Measurement>>() {
-                        }, uriVariables).getBody();
+
+        List<Measurement> measurements = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<Measurement>>() {
+                }).getBody();
         return measurements;
     }
 
