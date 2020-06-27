@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
+import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
 import lombok.extern.log4j.Log4j2;
 
 @Service
@@ -25,7 +26,7 @@ public class EvalParametersService {
                     null, PERIODICITY_NAME, -1);
 
     @Autowired
-    private co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository parameterRepository;
+    private EvalParametersRepository parameterRepository;
 
     private EvalParameter parameter;
 
@@ -55,12 +56,12 @@ public class EvalParametersService {
         EvalParameter DBperiodicity = this.parameter;
 
         try {
-            DBperiodicity = parameterRepository.retrieveByName(PERIODICITY_NAME, true);
+            DBperiodicity = parameterRepository.retrieveActiveByName(PERIODICITY_NAME);
             if (DBperiodicity == null) {
                 DBperiodicity = NON_PERIODICITY;
             }
 
-        } catch (final Exception e) {
+        } catch (Exception e) {
             log.error("Parameters error. Default periodicity will be used", e);
             DBperiodicity = NON_PERIODICITY;
         }
