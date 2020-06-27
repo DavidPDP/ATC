@@ -35,8 +35,6 @@ public class EvalParametersRepository extends EvaluatorRepository {
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
                 uriBuilder.pathSegment(name);
                 uriBuilder.path(ACTIVE_URL_PATH);
-
-                System.out.println("GG" + uriBuilder.toUriString());
                 EvalParameter parameter = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.GET, null, EvalParameter.class).getBody();
                 return Optional.ofNullable(parameter);
