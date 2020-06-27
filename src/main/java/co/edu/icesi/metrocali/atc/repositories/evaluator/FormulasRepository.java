@@ -53,4 +53,10 @@ public class FormulasRepository extends EvaluatorRepository {
         return Optional.ofNullable(newFormula);
     }
 
+    public Optional<Formula> retrieveActivesByVariable(String name) {
+        Formula formula = blackboxApi.exchange(blackboxEvaluatorApiURL + "/" + name + ACTIVE_URL,
+                HttpMethod.GET, null, Formula.class).getBody();
+        return Optional.ofNullable(formula);
+    }
+
 }
