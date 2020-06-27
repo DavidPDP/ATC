@@ -39,7 +39,7 @@ public class VariableService {
         List<Variable> variables = new ArrayList<>();
         for (Formula formula : formulas) {
             Variable variable = formula.getVariable();
-            variable.setLastFormula(formula);
+            variable.setLastFormulaExpression(formula.getExpression());
             variables.add(variable);
         }
         return variables;
@@ -50,7 +50,7 @@ public class VariableService {
         List<Variable> variables = new ArrayList<>();
         for (Formula formula : formulas) {
             Variable variable = formula.getVariable();
-            variable.setLastFormula(formula);
+            variable.setLastFormulaExpression(formula.getExpression());
             variables.add(variable);
         }
         return variables;

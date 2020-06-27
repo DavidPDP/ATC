@@ -24,6 +24,6 @@ public class Variable {
 
 	private Boolean isKPI;
 
-	private Formula lastFormula;
+	private String lastFormulaExpression;
 
 }

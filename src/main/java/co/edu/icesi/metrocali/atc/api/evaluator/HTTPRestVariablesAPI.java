@@ -61,8 +61,8 @@ public class HTTPRestVariablesAPI {
 
         try {
 
-            Object result = expressionsService
-                    .evaluateExpression(variable.getLastFormula().getExpression());
+            Object result =
+                    expressionsService.evaluateExpression(variable.getLastFormulaExpression());
             if (result instanceof String) {
                 if (((String) result).startsWith("Error:")) {
                     throw new Exception((String) result);
@@ -72,7 +72,7 @@ public class HTTPRestVariablesAPI {
             Optional<Variable> variableWrapper =
                     variableService.saveVariable(variable.getNameVariable(),
                             variable.getClassification(), variable.getDescriptionVar(),
-                            variable.getLastFormula().getExpression(), variable.getIsKPI());
+                            variable.getLastFormulaExpression(), variable.getIsKPI());
             Variable newVariable = null;
             if (variableWrapper.isPresent()) {
                 newVariable = variableWrapper.get();
@@ -94,7 +94,7 @@ public class HTTPRestVariablesAPI {
 
         try {
             Object result = expressionsService
-                    .evaluateExpression(variable.getLastFormula().getExpression());
+                    .evaluateExpression(variable.getLastFormulaExpression());
             if (result instanceof String) {
                 if (((String) result).startsWith("Error:")) {
                     throw new Exception((String) result);
@@ -104,7 +104,7 @@ public class HTTPRestVariablesAPI {
             Optional<Variable> variableWrapper =
                     variableService.saveVariable(variable.getNameVariable(),
                             variable.getClassification(), variable.getDescriptionVar(),
-                            variable.getLastFormula().getExpression(), variable.getIsKPI());
+                            variable.getLastFormulaExpression(), variable.getIsKPI());
 
             Variable newVariable = null;
             if (variableWrapper.isPresent()) {

@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
@@ -68,8 +67,8 @@ public class Executor {
         List<Measurement> measurements = new ArrayList<>();
         for (Variable variable : kpis) {
 
-            Formula formula = variable.getLastFormula();
-            double value = (double) interpreter.parseExpression(formula.getExpression());
+            String formulaExpression = variable.getLastFormulaExpression();
+            double value = (double) interpreter.parseExpression(formulaExpression);
             Measurement measurement = new Measurement();
             measurement.setValue(value);
             measurement.setVariable(variable);
