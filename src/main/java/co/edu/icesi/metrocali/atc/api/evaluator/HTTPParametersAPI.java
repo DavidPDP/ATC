@@ -45,8 +45,7 @@ public class HTTPParametersAPI {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<List<EvalParameter>> getActiveParameters()
-            throws Exception {
+    public ResponseEntity<List<EvalParameter>> getActiveParameters() throws Exception {
 
         try {
             List<EvalParameter> parameters = new ArrayList<>();
@@ -62,12 +61,13 @@ public class HTTPParametersAPI {
     }
 
     @PutMapping(value = "/{parameterName}")
-    public ResponseEntity<?> updateParameter(@PathVariable(required = true) String parameterName,
+    public ResponseEntity<EvalParameter> updateParameter(@PathVariable(required = true) String parameterName,
             @RequestBody(required = true) EvalParameter parameter) throws Exception {
 
         try {
-            parametersService.updateParameterValue(parameterName, parameter.getValue());
-            return ResponseEntity.ok().build();
+
+            return ResponseEntity.ok().body(parametersService
+                    .updateParameterValue(parameterName, parameter.getValue()).get());
         } catch (Exception e) {
             log.error("at POST /parameters/{parameterName}", e);
             throw e;
