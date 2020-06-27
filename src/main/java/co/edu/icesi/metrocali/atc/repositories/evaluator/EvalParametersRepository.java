@@ -3,6 +3,7 @@ package co.edu.icesi.metrocali.atc.repositories.evaluator;
 import java.util.Date;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -29,7 +30,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                 super(blackboxApi, blackboxEvaluatorApiURL);
         }
 
-        public EvalParameter retrieveActiveByName(String name) {
+        public Optional<EvalParameter> retrieveActiveByName(String name) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
                 uriBuilder.pathSegment(name);
@@ -38,7 +39,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                 System.out.println("GG" + uriBuilder.toUriString());
                 EvalParameter parameter = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.GET, null, EvalParameter.class).getBody();
-                return parameter;
+                return Optional.ofNullable(parameter);
         }
 
         public List<EvalParameter> retrieveByName(String name, Date start, Date end) {
@@ -104,7 +105,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                 return parameters;
         }
 
-        public EvalParameter update(EvalParameter parameter) {
+        public Optional<EvalParameter> update(EvalParameter parameter) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
                 uriBuilder.pathSegment(parameter.getName());
@@ -112,7 +113,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
                 EvalParameter newParameter = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.PUT, parameterWrapper, EvalParameter.class).getBody();
 
-                return newParameter;
+                return Optional.ofNullable(newParameter);
         }
 
 }

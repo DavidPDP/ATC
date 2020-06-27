@@ -3,7 +3,7 @@ package co.edu.icesi.metrocali.atc.services.evaluator;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
-
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,13 +56,17 @@ public class EvalParametersService {
         EvalParameter DBperiodicity = this.parameter;
 
         try {
-            DBperiodicity = parameterRepository.retrieveActiveByName(PERIODICITY_NAME);
-            if (DBperiodicity == null) {
+            Optional<EvalParameter> DBPeriodicityWrapper =
+                    parameterRepository.retrieveActiveByName(PERIODICITY_NAME);
+
+            if (!DBPeriodicityWrapper.isPresent()) {
                 DBperiodicity = NON_PERIODICITY;
+            } else {
+                DBperiodicity = DBPeriodicityWrapper.get();
             }
 
         } catch (Exception e) {
-            log.error("Parameters error. Default periodicity will be used", e);
+            log.error("Parameters request error. Default periodicity will be used", e);
             DBperiodicity = NON_PERIODICITY;
         }
         return DBperiodicity;
@@ -106,15 +110,16 @@ public class EvalParametersService {
         return parameters;
     }
 
-    public void updateParameterValue(final String parameterName, final Double value)
-            throws Exception {
+    public Optional<EvalParameter> updateParameterValue(final String parameterName,
+            final Double value) throws Exception {
         Date currentDate = Date.from(new Timestamp(System.currentTimeMillis()).toInstant());
         EvalParameter newParameter = new EvalParameter();
         newParameter.setName(parameterName);
         newParameter.setValue(value);
         newParameter.setEnableStart(currentDate);
         newParameter.setEnableEnd(null);
-        parameterRepository.update(newParameter);
+
+        return parameterRepository.update(newParameter);
     }
 
     public List<EvalParameter> getActiveParameters() {
