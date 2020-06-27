@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
@@ -95,6 +96,7 @@ public class EvalParametersRepository extends EvaluatorRepository {
         public List<EvalParameter> retrieveActives() {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+                uriBuilder.path(FILTERED_URL_PATH);
                 uriBuilder.queryParam(ACTIVE_PARAM, true);
 
                 List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
@@ -108,8 +110,9 @@ public class EvalParametersRepository extends EvaluatorRepository {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
                 uriBuilder.pathSegment(parameter.getName());
+                HttpEntity<EvalParameter> parameterWrapper = new HttpEntity<>(parameter);
                 EvalParameter newParameter = blackboxApi.exchange(uriBuilder.toUriString(),
-                                HttpMethod.PUT, null, EvalParameter.class).getBody();
+                                HttpMethod.PUT, parameterWrapper, EvalParameter.class).getBody();
 
                 return newParameter;
         }
