@@ -81,10 +81,11 @@ public class EvalParametersRepository extends EvaluatorRepository {
     }
 
     public List<EvalParameter> retrieveAll() {
-        List<EvalParameter> parameters =
-                blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<List<EvalParameter>>() {
-                        }).getBody();
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<EvalParameter>>() {
+                }).getBody();
         return parameters;
     }
 
@@ -100,7 +101,9 @@ public class EvalParametersRepository extends EvaluatorRepository {
     }
 
     public EvalParameter update(EvalParameter parameter) {
-        EvalParameter newParameter = blackboxApi.exchange(blackboxEvaluatorApiURL + PARAMETERS_URL,
+        UriComponentsBuilder uriBuilder =
+                UriComponentsBuilder.fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
+        EvalParameter newParameter = blackboxApi.exchange(uriBuilder.toUriString(),
                 HttpMethod.PUT, null, EvalParameter.class).getBody();
 
         return newParameter;
