@@ -16,7 +16,7 @@ import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.services.evaluator.MeasurementsService;
 
 @RestController
-@RequestMapping("/evaluator/measurements")
+@RequestMapping("atc/evaluator/measurements")
 public class HTTPMeasurementsAPI {
     @Autowired
     private MeasurementsService measurementsService;

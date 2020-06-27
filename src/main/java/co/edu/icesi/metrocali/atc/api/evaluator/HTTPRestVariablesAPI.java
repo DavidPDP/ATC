@@ -18,7 +18,7 @@ import co.edu.icesi.metrocali.atc.services.evaluator.VariableService;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
-@RequestMapping("/evaluator/variables")
+@RequestMapping("atc/evaluator/variables")
 @Log4j2
 public class HTTPRestVariablesAPI {
 

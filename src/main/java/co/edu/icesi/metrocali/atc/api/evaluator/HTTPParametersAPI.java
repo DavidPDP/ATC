@@ -17,7 +17,7 @@ import co.edu.icesi.metrocali.atc.services.evaluator.EvalParametersService;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
-@RequestMapping("/evaluator/parameters")
+@RequestMapping("atc/evaluator/parameters")
 @Log4j2
 public class HTTPParametersAPI {
 

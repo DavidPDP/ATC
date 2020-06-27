@@ -15,7 +15,7 @@ import co.edu.icesi.metrocali.atc.services.evaluator.ExpressionsService;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
-@RequestMapping("/evaluator/expressions")
+@RequestMapping("atc/evaluator/expressions")
 @Log4j2
 public class HTTPRestExpressionsAPI {
 
