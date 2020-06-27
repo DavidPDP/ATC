@@ -54,7 +54,7 @@ public class WebSecurityConfiguration
 		
     	http.cors().and().csrf().disable()
 		.authorizeRequests().antMatchers(
-			SecurityConstants.Login_Url
+			SecurityConstants.Login_Url, "/atc/evaluator/**"
 		)
 		.permitAll()
         .anyRequest().authenticated().and()
@@ -81,6 +81,7 @@ public class WebSecurityConfiguration
         config.addAllowedMethod("POST");
         config.addAllowedMethod("DELETE");
         config.addAllowedMethod("PATCH");
+        config.addAllowedMethod("PUT");
         source.registerCorsConfiguration("/**", config);
         
         return new CorsFilter(source);
