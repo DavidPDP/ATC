@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
+import co.edu.icesi.metrocali.atc.constants.NotificationType;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Formula;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
@@ -16,6 +17,8 @@ import co.edu.icesi.metrocali.atc.evaluator.expression.Context;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Executor;
 import co.edu.icesi.metrocali.atc.evaluator.expression.FunctionInfo;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.FormulasRepository;
+import co.edu.icesi.metrocali.atc.services.notifications.NotificationManager;
+import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
 
 @Component
@@ -25,9 +28,9 @@ public class ExpressionsService {
     @Autowired
     private Context context;
 
-    // TODO: INTEGRATION:
-    // @Autowired
-    // private NotificationService notificationService;
+
+    @Autowired
+    private NotificationManager notificationService;
 
     @Autowired
     private Executor executor;
@@ -60,15 +63,13 @@ public class ExpressionsService {
 
     }
 
-    // REVIEW: It must be called calculateKPI
+
     public void calculateKPI() {
 
-        // TODO: Remove or change by the original method
-        executor.temporalEvaluateKPI();
-        // TODO: Calculate variables
-        // TODO: INTEGRATION:
-        // notificationService.sendNotificationMessage("/" + mainSubscriptionEvaluatorChannel + "/"
-        // + dashboardSubscriptionEvaluatorChannel);
+        StateNotification notification =
+                new StateNotification(NotificationType.New_Measurements_Calculated,
+                        Optional.empty(), new Object[] {executor.temporalEvaluateKPI()});
+        notificationService.update(notification);
 
     }
 
