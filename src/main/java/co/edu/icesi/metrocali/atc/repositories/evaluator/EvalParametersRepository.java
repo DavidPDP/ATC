@@ -46,8 +46,8 @@ public class EvalParametersRepository extends EvaluatorRepository {
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
                 uriBuilder.pathSegment(name);
                 uriBuilder.path(FILTERED_URL_PATH);
-                uriBuilder.queryParam(ENABLE_FROM_PARAM, start);
-                uriBuilder.queryParam(ENABLE_UNTIL_PARAM, end);
+                uriBuilder.queryParam(ENABLE_FROM_PARAM, dateFormat.format(start));
+                uriBuilder.queryParam(ENABLE_UNTIL_PARAM, dateFormat.format(end));
                 List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.GET, null,
                                 new ParameterizedTypeReference<List<EvalParameter>>() {
@@ -72,8 +72,8 @@ public class EvalParametersRepository extends EvaluatorRepository {
 
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + PARAMETERS_URL);
-                uriBuilder.queryParam(ENABLE_FROM_PARAM, start);
-                uriBuilder.queryParam(ENABLE_UNTIL_PARAM, end);
+                uriBuilder.queryParam(ENABLE_FROM_PARAM, dateFormat.format(start));
+                uriBuilder.queryParam(ENABLE_UNTIL_PARAM, dateFormat.format(end));
                 List<EvalParameter> parameters = blackboxApi.exchange(uriBuilder.toUriString(),
                                 HttpMethod.GET, null,
                                 new ParameterizedTypeReference<List<EvalParameter>>() {
