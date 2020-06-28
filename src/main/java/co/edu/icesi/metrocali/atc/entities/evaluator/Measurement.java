@@ -3,7 +3,9 @@ package co.edu.icesi.metrocali.atc.entities.evaluator;
 
 
 import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -31,6 +33,7 @@ public class Measurement {
 	private Date startDate;
 
 	@JsonProperty("variable")
+	@JsonInclude(value = Include.NON_NULL)
 	private Variable variable;
 
 }

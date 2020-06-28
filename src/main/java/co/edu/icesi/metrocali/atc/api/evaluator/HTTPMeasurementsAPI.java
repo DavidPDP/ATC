@@ -25,7 +25,9 @@ public class HTTPMeasurementsAPI {
     private HashMap<String, List<Measurement>> groupByVariable(List<Measurement> measurements) {
         HashMap<String, List<Measurement>> measurementsByVariable = new HashMap<>();
         for (Measurement measurement : measurements) {
+            
             String variableName = measurement.getVariable().getNameVariable();
+            measurement.setVariable(null);
             if (measurementsByVariable.containsKey(variableName)) {
                 measurementsByVariable.get(variableName).add(measurement);
             } else {
