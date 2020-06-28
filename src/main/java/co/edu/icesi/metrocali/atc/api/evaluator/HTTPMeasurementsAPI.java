@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.api.evaluator;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,7 +29,9 @@ public class HTTPMeasurementsAPI {
             if (measurementsByVariable.containsKey(variableName)) {
                 measurementsByVariable.get(variableName).add(measurement);
             } else {
-                measurementsByVariable.put(variableName, Arrays.asList(measurement));
+                List<Measurement> toAddMeasurements = new ArrayList<>();
+                toAddMeasurements.add(measurement);
+                measurementsByVariable.put(variableName, toAddMeasurements);
             }
         }
         return measurementsByVariable;
