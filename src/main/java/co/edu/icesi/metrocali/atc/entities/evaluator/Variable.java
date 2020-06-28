@@ -29,7 +29,7 @@ public class Variable {
 	@JsonProperty(value = "is_kpi")
 	private Boolean isKPI;
 
-	@JsonProperty(value = "formulaExpression")
+	@JsonProperty(value = "formula_expression")
 	private String lastFormulaExpression;
 
 }
