@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.entities.evaluator;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -20,14 +21,19 @@ import lombok.Setter;
 @NoArgsConstructor
 public class EvalParameter {
 
+	@JsonProperty("id")
 	private Integer idParameter;
 
+	@JsonProperty("enable_end")
 	private Date enableEnd;
 
+	@JsonProperty("enable_start")
 	private Date enableStart;
 
+	@JsonProperty("name")
 	private String name;
 
+	@JsonProperty("value")
 	private double value;
 
 	public EvalParameter(Date enableStart, Date enableEnd, String name, int value) {
