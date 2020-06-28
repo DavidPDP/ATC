@@ -45,7 +45,9 @@ public class HTTPRestVariablesAPI {
                     variable.setClassification("Variable del sistema");
                     variable.setIsKPI(false);
                     variable.setDescriptionVar(description);
+                    variable.setLastFormulaExpression("N/A");
                     variables.add(variable);
+
                 }
             }
 
