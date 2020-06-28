@@ -23,7 +23,7 @@ public class HTTPRestExpressionsAPI {
     private ExpressionsService expressionsService;
 
     // Expressions
-    @PostMapping(value = "/evaluateExpression")
+    @PostMapping
     public ResponseEntity<Object> getEvaluatedExpression(
             @RequestBody EvaluatedExpression expressionWrapper) {
         String expression = expressionWrapper.getExpression();
