@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -88,23 +89,22 @@ public class HTTPRestVariablesAPI {
 
     }
 
-    @PutMapping(value = "/{name}")
-    public ResponseEntity<Variable> updateVariable(@RequestBody Variable variable)
-            throws Exception {
+    @PutMapping(value = "/{variable_name}")
+    public ResponseEntity<Variable> updateVariable(
+            @PathVariable(name = "variable_name", required = true) String variableName,
+            @RequestBody Variable variable) throws Exception {
 
         try {
-            Object result = expressionsService
-                    .evaluateExpression(variable.getLastFormulaExpression());
+            Object result =
+                    expressionsService.evaluateExpression(variable.getLastFormulaExpression());
             if (result instanceof String) {
                 if (((String) result).startsWith("Error:")) {
                     throw new Exception((String) result);
                 }
             }
-
-            Optional<Variable> variableWrapper =
-                    variableService.saveVariable(variable.getNameVariable(),
-                            variable.getClassification(), variable.getDescriptionVar(),
-                            variable.getLastFormulaExpression(), variable.getIsKPI());
+            Optional<Variable> variableWrapper = variableService.updateVariable(variableName,
+                    variable.getClassification(), variable.getDescriptionVar(),
+                    variable.getLastFormulaExpression(), variable.getIsKPI());
 
             Variable newVariable = null;
             if (variableWrapper.isPresent()) {
