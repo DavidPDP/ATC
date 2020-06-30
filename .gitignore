@@ -79,4 +79,5 @@ test-output
 atlassian-ide-plugin.xml
 .gradletasknamecache
 
-.vscode/
+.vscode
+.vscode/**
