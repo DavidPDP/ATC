@@ -54,7 +54,7 @@ public class WebSecurityConfiguration
 		
     	http.cors().and().csrf().disable()
 		.authorizeRequests().antMatchers(
-			SecurityConstants.Login_Url, "/atc/evaluator/**"
+			SecurityConstants.Login_Url, "/atc/evaluator/**", "/atc/categories"
 		)
 		.permitAll()
         .anyRequest().authenticated().and()
