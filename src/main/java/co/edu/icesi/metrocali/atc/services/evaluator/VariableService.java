@@ -108,17 +108,27 @@ public class VariableService {
     }
 
     public Optional<Variable> saveVariable(String name, String classification, String description,
-            String expression, boolean isKPI) {
+            String expression, boolean isKPI) throws Exception {
+
+        Date now = Date.from(new Timestamp(System.currentTimeMillis()).toInstant());
         Optional<Variable> newVariable = Optional.empty();
         Variable variable = new Variable(name, classification, description, isKPI, expression);
 
-        newVariable = variableRepository.save(variable);
-
         Formula formula = new Formula();
         formula.setExpression(expression);
+        formula.setVariable(variable);
+        formula.setStartDate(now);
+        
+        newVariable = variableRepository.save(variable);
+        if (newVariable.isPresent()) {
+            formula = formulasRepository.save(formula).get();
+            variable = formula.getVariable();
+            variable.setLastFormulaExpression(formula.getExpression());
+        } else {
+            throw new Exception("La variable no se agregó");
+        }
 
-        formulasRepository.save(formula);
-        return newVariable;
+        return Optional.of(variable);
     }
 
 }
