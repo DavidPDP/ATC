@@ -27,7 +27,6 @@ public class HTTPRestExpressionsAPI {
     public ResponseEntity<Object> getEvaluatedExpression(
             @RequestBody EvaluatedExpression expressionWrapper) {
         String expression = expressionWrapper.getExpression();
-        System.out.println(expression);
         try {
             Object result = expressionsService.evaluateExpression(expression);
             EvaluatedExpression expressionDTO = new EvaluatedExpression(expression, result);
