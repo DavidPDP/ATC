@@ -59,6 +59,7 @@ public class FormulasRepository extends EvaluatorRepository {
         public Optional<Formula> save(Formula formula) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+                uriBuilder.pathSegment(formula.getVariable().getNameVariable());
                 Formula newFormula = blackboxApi
                                 .postForEntity(uriBuilder.toUriString(), formula, Formula.class)
                                 .getBody();
