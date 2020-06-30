@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -63,48 +64,51 @@ public class VariableService {
             String expression, boolean isKPI) throws Exception {
         Date now = Date.from(new Timestamp(System.currentTimeMillis()).toInstant());
         Variable newVariable = new Variable(name, classification, description, isKPI, null);
-        Optional<Variable> variableWrapper = variableRepository.retrieveByName(name);
-        if (variableWrapper.isPresent()) {
-            newVariable = variableWrapper.get();
-            newVariable.setClassification(classification);
-            newVariable.setDescriptionVar(description);
-            newVariable.setIsKPI(isKPI);
+        Optional<Variable> variableWrapper = variableRepository.update(newVariable);
 
-            Formula newFormula = new Formula();
-            newFormula.setStartDate(now);
-            newFormula.setEndDate(null);
-            newFormula.setExpression(expression);
+        if (!variableWrapper.isPresent()) {
+            throw new Exception("No se pudo actualizar la variable: " + name);
+        }
 
-            Optional<Formula> lastFormulaWrapper =
-                    formulasRepository.retrieveActivesByVariable(name);
+        Optional<Formula> formulaWrapper = formulasRepository.retrieveActivesByVariable(name);
 
-            if (!lastFormulaWrapper.isPresent()) {
-                throw new Exception("Variable: " + name + " no tiene una última fórmula asignada");
-            }
 
-            Formula lastFormula = lastFormulaWrapper.get();
-
-            lastFormula.setEndDate(now);
-            formulasRepository.update(name, lastFormula);
-
-            Optional<Formula> newFormulaWrapper = formulasRepository.save(newFormula);
-            if (!newFormulaWrapper.isPresent()) {
-                throw new Exception("Formula para: " + name + " no fue asignada");
-            }
-            newFormula = newFormulaWrapper.get();
-
-            variableWrapper = variableRepository.update(newVariable);
-            if (!variableWrapper.isPresent()) {
-                throw new Exception("No se pudo actualizar la variable: " + name);
-            }
-            newVariable = variableWrapper.get();
-            newVariable.setLastFormulaExpression(lastFormula.getExpression());
-
-            return Optional.of(newVariable);
-
-        } else {
+        if (!formulaWrapper.isPresent()) {
             throw new Exception("Variable: " + name + " no existe");
         }
+        Formula lastFormula = formulaWrapper.get();
+        newVariable = lastFormula.getVariable();
+        newVariable.setClassification(classification);
+        newVariable.setDescriptionVar(description);
+        newVariable.setIsKPI(isKPI);
+
+        Formula newFormula = new Formula();
+        newFormula.setStartDate(now);
+        newFormula.setEndDate(null);
+        newFormula.setExpression(expression);
+        newFormula.setVariable(newVariable);
+
+        if (!lastFormula.getExpression().equals(expression)) {
+
+            lastFormula.setEndDate(now);
+            if (!formulasRepository.update(name, lastFormula).isPresent()) {
+                throw new Exception("No se actualizó la última fórmula de la variable: " + name);
+            }
+            try {
+                newFormula = formulasRepository.save(newFormula).get();
+            } catch (Exception e) {
+                lastFormula.setEndDate(null);
+                formulasRepository.update(name, lastFormula);
+                throw new Exception("La formula para: " + name + " no fue asignada");
+            }
+
+        }
+
+
+        newVariable = variableWrapper.get();
+        newVariable.setLastFormulaExpression(newFormula.getExpression());
+
+        return Optional.of(newVariable);
     }
 
     public Optional<Variable> saveVariable(String name, String classification, String description,
@@ -118,7 +122,7 @@ public class VariableService {
         formula.setExpression(expression);
         formula.setVariable(variable);
         formula.setStartDate(now);
-        
+
         newVariable = variableRepository.save(variable);
         if (newVariable.isPresent()) {
             formula = formulasRepository.save(formula).get();
