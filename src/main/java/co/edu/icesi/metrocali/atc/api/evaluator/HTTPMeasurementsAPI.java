@@ -3,7 +3,6 @@ package co.edu.icesi.metrocali.atc.api.evaluator;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +24,7 @@ public class HTTPMeasurementsAPI {
     private HashMap<String, List<Measurement>> groupByVariable(List<Measurement> measurements) {
         HashMap<String, List<Measurement>> measurementsByVariable = new HashMap<>();
         for (Measurement measurement : measurements) {
-            
+
             String variableName = measurement.getVariable().getNameVariable();
             measurement.setVariable(null);
             if (measurementsByVariable.containsKey(variableName)) {
@@ -105,13 +104,11 @@ public class HTTPMeasurementsAPI {
                 }
 
 
-                for (String name : variablesNames) {
-                    List<Measurement> measurements = measurementsService
-                            .getSortedMeasurementsBetweenDates(variablesNames, start, end);
-                    groupByVariable(measurements);
 
-                    measurementsByVariable.put(name, measurements);
-                }
+                List<Measurement> measurements = measurementsService
+                        .getSortedMeasurementsBetweenDates(variablesNames, start, end);
+                measurementsByVariable = groupByVariable(measurements);
+
             }
             return ResponseEntity.ok().body(measurementsByVariable);
         } else {

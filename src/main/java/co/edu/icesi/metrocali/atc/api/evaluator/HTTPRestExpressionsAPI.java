@@ -27,7 +27,6 @@ public class HTTPRestExpressionsAPI {
     public ResponseEntity<Object> getEvaluatedExpression(
             @RequestBody EvaluatedExpression expressionWrapper) {
         String expression = expressionWrapper.getExpression();
-        System.out.println(expression);
         try {
             Object result = expressionsService.evaluateExpression(expression);
             EvaluatedExpression expressionDTO = new EvaluatedExpression(expression, result);
@@ -37,7 +36,7 @@ public class HTTPRestExpressionsAPI {
                     EvaluatedExpression.getEvalEvaluatedExpressionResult(expression, exception);
             return ResponseEntity.badRequest().body(expressionErrorResult);
         } catch (Exception e) {
-            log.error("Error at GET /evaluator/evaluateExpression", e);
+            log.error("Error at POST /evaluator/evaluateExpression", e);
             throw e;
         }
     }

@@ -60,6 +60,10 @@ public class NotificationManager
 			NotificationType.New_Event_Entity, 
 			routes
 		);
+
+		multicastChannels.put(
+			NotificationType.New_Measurements_Calculated, routes
+		);
 		
 	}
 	

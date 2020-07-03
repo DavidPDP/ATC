@@ -59,6 +59,7 @@ public class FormulasRepository extends EvaluatorRepository {
         public Optional<Formula> save(Formula formula) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+                uriBuilder.pathSegment(formula.getVariable().getNameVariable());
                 Formula newFormula = blackboxApi
                                 .postForEntity(uriBuilder.toUriString(), formula, Formula.class)
                                 .getBody();
@@ -78,6 +79,7 @@ public class FormulasRepository extends EvaluatorRepository {
         public Optional<Formula> update(String variableName, Formula formula) {
                 UriComponentsBuilder uriBuilder = UriComponentsBuilder
                                 .fromHttpUrl(blackboxEvaluatorApiURL + FORMULAS_URL);
+                uriBuilder.pathSegment(variableName);
                 Formula newFormula = blackboxApi
                                 .exchange(uriBuilder.toUriString(), HttpMethod.PUT,
                                                 new HttpEntity<Formula>(formula), Formula.class)
