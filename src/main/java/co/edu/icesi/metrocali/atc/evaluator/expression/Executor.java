@@ -84,9 +84,9 @@ public class Executor {
     }
 
     void restarVariable() {
-        context.setValueForVar("eventsQHSs", new ArrayList<Integer>());
-        context.setValueForVar("lastEvents", new ArrayList<Event>());
-        context.setValueForVar("eventsDone", new HashMap<Integer, Integer>());
+        context.setValueForVar(Context.EVENTSQHSS, new ArrayList<Integer>());
+        context.setValueForVar(Context.EVENTS_DONE, new HashMap<Integer, Integer>());
+        context.updateLastEvent();
     }
 
     // TODO: remove method and see expressionService.calculateVariables

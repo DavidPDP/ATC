@@ -57,6 +57,7 @@ public class Functions {
                     time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
                 }
             }
+            time/=(1000*60);
             ret.add(time);
         }
         return ret;
@@ -76,6 +77,7 @@ public class Functions {
                     time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
                 }
             }
+            time/=(1000*60);
             ret.add(time);
         }
         return ret;
@@ -117,6 +119,7 @@ public class Functions {
                     time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
                 }
             }
+            time/=(1000*60);
             ret.add(time);
         }
         return ret;
@@ -136,6 +139,7 @@ public class Functions {
                     time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
                 }
             }
+            time/=(1000*60);
             ret.add(time);
         }
         return ret;
@@ -163,6 +167,7 @@ public class Functions {
                     time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
                 }
             }
+            time/=(1000*60);
             ret.add(time);
         }
         return ret;
@@ -218,6 +223,7 @@ public class Functions {
                 busyTime += userTrack.getEndTime().getTime() - userTrack.getStartTime().getTime();
             }
         }
+        busyTime/=(1000*60);
         return busyTime;
     }
 
@@ -298,6 +304,7 @@ public class Functions {
                 stayTime += userTrack.getEndTime().getTime() - userTrack.getStartTime().getTime();
             }
         }
+        stayTime/=(1000*60);
         return stayTime;
     }
 

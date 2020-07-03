@@ -1,24 +1,35 @@
 package co.edu.icesi.metrocali.atc.evaluator.expression;
 
 import java.lang.reflect.Method;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import co.edu.icesi.metrocali.atc.constants.NotificationType;
+import co.edu.icesi.metrocali.atc.constants.StateValue;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
+import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
+import co.edu.icesi.metrocali.atc.entities.events.State;
+import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
+import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
+import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
-
-
+import co.edu.icesi.metrocali.atc.services.notifications.events.EventStateChangeConcerner;
+import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
 @Service
-public class Context {
+public class Context implements EventStateChangeConcerner {
 
     public static final String EVENTSQHSS = "eventsQHSs";
     public static final String EVENTSQHSS_Day = "eventsQHSsDay";
@@ -35,18 +46,18 @@ public class Context {
     @Autowired
     private SpringExpressions interpreter;
 
-    // TODO: Integration:
-    // @Autowired
-    // private UserService userService;
-    // @Autowired
-    // private SchedulingService schedulingService;
-    // @Autowired
-    // private EventService eventService;
-
     @Autowired
     private EvalParametersRepository parameters;
+
     private HashMap<String, Object> variables;
     private HashMap<String, String> variablesDesc;
+
+    // AVIOM repositories
+
+    @Autowired
+    private CategoriesRepository categories;
+    @Autowired
+    private OperatorsRepository operators;
 
     @PostConstruct
     public void loadSystemVariables() {
@@ -58,16 +69,14 @@ public class Context {
         addVar(EVENTS_DONE, new HashMap<Long, Integer>(), "");
         addVar(EVENTS_CONTROLLER, new HashMap<Long, List<Integer>>(), "");
         addVar(CONTROLLERS, new HashMap<String, User>(), "");
-         //TODO: integración
-        // loadPrioritiesAndThreshold();
+        loadPrioritiesAndThreshold();
         loadVariableDesc();
     }
 
     private void loadVariableDesc() {
         variablesDesc.put(EVENTSQHSS,
                 "Contiene el histórico de los tamaños de la cola de eventos desde la última vez que se realizó el cálculo de los KPI.");
-        variablesDesc.put(EVENTSQHSS_Day,
-                "Contiene el histórico de los tamaños de la cola de eventos en todo el día.");
+        variablesDesc.put(EVENTSQHSS_Day, "Contiene el histórico de los tamaños de la cola de eventos en todo el día.");
         variablesDesc.put(LAST_EVENTS,
                 "Lista con los últimos eventos generados desde la última vez que se realizó el cálculo de los KPI.");
         variablesDesc.put(EVENTS_DONE,
@@ -82,89 +91,97 @@ public class Context {
                 "Hashmap que almacena todas las prioridades disponibles para cualquier tipo de evento.");
     }
 
-    private void fillVariables(Timestamp lastDate) {
-         //TODO: integración
-        // loadLastEventsAndEventsDone(lastDate);
+    private void fillVariables() {
+        loadEventsDone();
         loadEventsController();
-        // TODO: integración
-        // loadControllersAviable();
+        loadControllersAviable();
         Iterator<String> keys = variables.keySet().iterator();
         while (keys.hasNext()) {
             String key = keys.next();
             interpreter.setVariable(key, variables.get(key));
         }
     }
-    // TODO: integración
-    // private void loadControllersAviable() {
-    // //TODO: integración
-    // List<User> controllers=userService.getOnlineControllers();
-    // HashMap<String,User> cMap=new HashMap<String,User>();
-    // for (User user : controllers) {
-    // cMap.put(user.getId()+"", user);
-    // }
-    // setValueForVar(CONTROLLERS, cMap);
 
-    // }
+    private void loadControllersAviable() {
+        List<Controller> controllers = operators.retrieveOnlineControllers();
+        HashMap<String, User> cMap = new HashMap<String, User>();
+        for (User user : controllers) {
+            cMap.put(user.getId() + "", user);
+        }
+        setValueForVar(CONTROLLERS, cMap);
 
-    // TODO: integración
-    // private void loadPrioritiesAndThreshold() {
-    // Iterable<SubCategory> subs = eventService.getSubcategories();
-    // HashSet<Integer> priorities = new HashSet<>();
-    // HashMap<Integer, Double> threshold = new HashMap<Integer, Double>();
+    }
 
-    // for (SubCategory sCategory : subs) {
-    // int priority = sCategory.getPriority();
-    // priorities.add(priority);
-    // }
-    // for (Integer integer : priorities) {
-    // EvalParameter parameter =
-    // parameters.findByNameAndEnableEndIsNull("threshold" + integer);
-    // if (parameter != null) {
-    // threshold.put(integer, parameter.getValue());
-    // }
-    // }
-    // addVar(THRESHOLDS, threshold, "");
-    // addVar(PRIORITIES, priorities, "");
-    // }
+    private void loadPrioritiesAndThreshold() {
+        Iterable<Category> categoriesList = categories.retrieveAll();
+        HashSet<Integer> priorities = new HashSet<>();
+        HashMap<Integer, Double> threshold = new HashMap<Integer, Double>();
 
-    // TODO: integración
-    // private void loadLastEventsAndEventsDone(Timestamp lastDate) {
-    // Iterable<Event> events = eventService.getEvents();
-    // HashMap<Long, Integer> eventsDone = (HashMap<Long, Integer>) variables.get("eventsDone");
-    // List<Event> lEvents = (List<Event>) variables.get("lastEvents");
-    // for (Event event : events) {
-    // if (event.getCreation().compareTo(lastDate) >= 0
-    // || (event.getState().getId() != EventService.VERIFICATION
-    // && event.getState().getId() != EventService.ARCHIVE)) {
-    // lEvents.add(event);
-    // if (isEventDone(event)) {
-    // long idController = event.getUser().getId();
-    // Integer val = eventsDone.get(idController);
-    // if (val == null) {
-    // eventsDone.put(idController, 1);
-    // }
-    // val++;
-    // eventsDone.put(idController, val);
-    // }
-    // }
-    // }
-    // variables.put(LAST_EVENTS, lEvents);
-    // variables.put(EVENTS_DONE, eventsDone);
-    // }
+        for (Category category : categoriesList) {
+            Integer priority = category.getBasePriority();
+            if(priority!=null){
+                priorities.add(priority);
+            }
+        }
+        for (Integer integer : priorities) {
+            Optional<EvalParameter> parameter = parameters.retrieveActiveByName("threshold" + integer);
+            if (parameter.isPresent()) {
+                threshold.put(integer, parameter.get().getValue());
+            }
+        }
+        setValueForVar(THRESHOLDS, threshold);
+        setValueForVar(PRIORITIES, priorities);
+    }
 
-    // TODO: integración
-    // private boolean isEventDone(Event event) {
-    // Long idVer = EventService.VERIFICATION;
-    // Long idArc = EventService.ARCHIVE;
-    // boolean ret = event.getState().getId() == idVer;
-    // ret |= event.getState().getId() == idArc;
-    // return ret;
-    // }
+    private void loadEventsDone() {
+        HashMap<Long, Integer> eventsDone = (HashMap<Long, Integer>) variables.get("eventsDone");
+        List<Event> lEvents = (List<Event>) variables.get("lastEvents");
+        for (Event event : lEvents) {
+            if (isEventDone(event)) {
+                List<EventTrack> tracks = event.getEventsTracks();
+                long idController = -1;
+                for (int i = tracks.size() - 1; i >= 0; i--) {
+                    State state = tracks.get(i).getState();
+                    if (state.getName().equals(StateValue.In_Proccess.name())) {
+                        idController = tracks.get(i).getUser().getId();
+                        break;
+                    }
+                }
+                Integer val = eventsDone.get(idController);
+                if (val == null) {
+                    eventsDone.put(idController, 1);
+                }
+                val++;
+                eventsDone.put(idController, val);
+
+            }
+        }
+        variables.put(EVENTS_DONE, eventsDone);
+    }
+
+    public void updateLastEvent() {
+        List<Event> lEvents = (List<Event>) variables.get(LAST_EVENTS);
+        List<Event> events = new ArrayList<>();
+        for (Event event : lEvents) {
+            if (!isEventDone(event)) {
+                events.add(event);
+            }
+        }
+        variables.put(LAST_EVENTS, events);
+
+    }
+
+    private boolean isEventDone(Event event) {
+        State lastState = event.getLastEventTrack().getState();
+        boolean ret = lastState.getName().equals(StateValue.Verification.name());
+        ret |= lastState.getName().equals(StateValue.Archived.name());
+        return ret;
+    }
 
     private void loadEventsController() {
         HashMap<Long, Integer> eventsDone = (HashMap<Long, Integer>) variables.get("eventsDone");
-        HashMap<Long, List<Integer>> eventsController =
-                (HashMap<Long, List<Integer>>) variables.get("eventsController");
+        HashMap<Long, List<Integer>> eventsController = (HashMap<Long, List<Integer>>) variables
+                .get("eventsController");
         Iterator<Long> keys = eventsDone.keySet().iterator();
         while (keys.hasNext()) {
             long key = keys.next();
@@ -183,19 +200,9 @@ public class Context {
     }
 
     public Functions getRootObject() {
-        fillVariables(Executor.LAST_EXECTUTION);
+        fillVariables();
         return functions;
     }
-    // TODO: integración
-    // public void notifyChangesQueue() {
-    // List<Integer> eventsQHSs = (List<Integer>) variables.get("eventsQHSs");
-    // List<Integer> eventsQHSsDay = (List<Integer>) variables.get("eventsQHSsDay");
-    // int size = schedulingService.getQueueSize();
-    // eventsQHSs.add(size);
-    // eventsQHSsDay.add(size);
-    // setValueForVar(EVENTSQHSS, eventsQHSs);
-    // setValueForVar(EVENTSQHSS_Day, eventsQHSsDay);
-    // }
 
     public void addVar(String name, Object val, String desc) {
         variables.put(name, val);
@@ -229,8 +236,28 @@ public class Context {
         }
     }
 
-    // TODO: Faltan las descripciones de cada variable ¿donde están?
     public HashMap<String, String> getVariablesDesc() {
         return variablesDesc;
+    }
+
+    @Override
+    public void update(StateNotification notification) {
+        List<Event> lastEvent=(List<Event>) variables.get(LAST_EVENTS);
+        List<Integer> eventsQHSs = (List<Integer>) variables.get(EVENTSQHSS);
+        List<Integer> eventsQHSsDay = (List<Integer>) variables.get(EVENTSQHSS_Day);
+        int lastSize=eventsQHSs.isEmpty()?0:eventsQHSs.get(eventsQHSs.size()-1);
+        if(notification.getType()==NotificationType.New_Event_Entity){
+            Event newEvent=(Event)notification.getElementsInvolved()[0];
+            lastEvent.add(newEvent);
+            lastSize++;
+        }
+        if(notification.getType()==NotificationType.New_Event_Assignment){
+            lastSize+=lastSize>0?-1:0;
+        }
+        eventsQHSs.add(lastSize);
+        eventsQHSsDay.add(lastSize);
+        setValueForVar(EVENTSQHSS, eventsQHSs);
+        setValueForVar(EVENTSQHSS_Day, eventsQHSsDay);
+        setValueForVar(LAST_EVENTS,lastEvent);
     }
 }
