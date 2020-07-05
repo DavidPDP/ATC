@@ -1,5 +1,6 @@
 package co.edu.icesi.metrocali.atc.evaluator.expression;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -54,7 +55,11 @@ public class Functions {
                 boolean inPending =
                         eventTrack.getState().getName().equalsIgnoreCase(StateValue.Pending.name());
                 if (inPending) {
-                    time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
+                    Timestamp last=eventTrack.getEndTime();
+                    if(last==null){
+                        last=new Timestamp(System.currentTimeMillis());
+                    }
+                    time += last.getTime() - eventTrack.getStartTime().getTime();
                 }
             }
             time/=(1000*60);
@@ -74,7 +79,11 @@ public class Functions {
                 boolean assigned = eventTrack.getState().getName()
                         .equalsIgnoreCase(StateValue.Assigned.name());
                 if (assigned) {
-                    time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
+                    Timestamp last=eventTrack.getEndTime();
+                    if(last==null){
+                        last=new Timestamp(System.currentTimeMillis());
+                    }
+                    time += last.getTime() - eventTrack.getStartTime().getTime();
                 }
             }
             time/=(1000*60);
@@ -116,7 +125,11 @@ public class Functions {
                 boolean inProcess = eventTrack.getState().getName()
                         .equalsIgnoreCase(StateValue.In_Proccess.name());
                 if (inProcess) {
-                    time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
+                    Timestamp last=eventTrack.getEndTime();
+                    if(last==null){
+                        last=new Timestamp(System.currentTimeMillis());
+                    }
+                    time += last.getTime() - eventTrack.getStartTime().getTime();
                 }
             }
             time/=(1000*60);
@@ -220,7 +233,11 @@ public class Functions {
         for (UserTrack userTrack : userTracks) {
             boolean isBusy = userTrack.getState().getName().equalsIgnoreCase(StateValue.Busy.name());
             if (isBusy) {
-                busyTime += userTrack.getEndTime().getTime() - userTrack.getStartTime().getTime();
+                Timestamp last=userTrack.getEndTime();
+                if(last==null){
+                    last=new Timestamp(System.currentTimeMillis());
+                }
+                busyTime += last.getTime() - userTrack.getStartTime().getTime();
             }
         }
         busyTime/=(1000*60);
@@ -272,19 +289,19 @@ public class Functions {
 
     @EvalFunction(
             description = "lista con los mismos eventos pero en orden ascendente por el identificador de cada evento.")
-    public List<Event> sortE(List<?> events) {
+    public List<Event> sortE(List<Event> events) {
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
-        Event[] eventsA = (Event[]) events.toArray();
-        Arrays.sort(eventsA, new Comparator<Event>() {
+        events.sort(new Comparator<Event>() {
 
             @Override
             public int compare(Event o1, Event o2) {
                 return Long.compare(o1.getId(), o2.getId());
             }
         });
-        return Arrays.asList(eventsA);
+
+        return events;
     }
 
 
@@ -301,7 +318,11 @@ public class Functions {
             all |= userTrack.getState().getName().equalsIgnoreCase(StateValue.Unavailable.name());
             
             if (all) {
-                stayTime += userTrack.getEndTime().getTime() - userTrack.getStartTime().getTime();
+                Timestamp last=userTrack.getEndTime();
+                if(last==null){
+                    last=new Timestamp(System.currentTimeMillis());
+                }
+                stayTime += last.getTime() - userTrack.getStartTime().getTime();
             }
         }
         stayTime/=(1000*60);

@@ -1,6 +1,5 @@
 package co.edu.icesi.metrocali.atc.entities.evaluator;
 
-import java.sql.Timestamp;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

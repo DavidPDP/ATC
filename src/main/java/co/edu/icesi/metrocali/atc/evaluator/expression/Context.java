@@ -66,9 +66,9 @@ public class Context implements EventStateChangeConcerner {
         addVar(EVENTSQHSS, new ArrayList<Integer>(), "");
         addVar(EVENTSQHSS_Day, new ArrayList<Integer>(), "");
         addVar(LAST_EVENTS, new ArrayList<Event>(), "");
-        addVar(EVENTS_DONE, new HashMap<Long, Integer>(), "");
-        addVar(EVENTS_CONTROLLER, new HashMap<Long, List<Integer>>(), "");
-        addVar(CONTROLLERS, new HashMap<String, User>(), "");
+        addVar(EVENTS_DONE, new HashMap<Integer, Integer>(), "");
+        addVar(EVENTS_CONTROLLER, new HashMap<Integer, List<Integer>>(), "");
+        addVar(CONTROLLERS, new HashMap<String, Controller>(), "");
         loadPrioritiesAndThreshold();
         loadVariableDesc();
     }
@@ -93,8 +93,8 @@ public class Context implements EventStateChangeConcerner {
 
     private void fillVariables() {
         loadEventsDone();
-        loadEventsController();
         loadControllersAviable();
+        loadEventsController();
         Iterator<String> keys = variables.keySet().iterator();
         while (keys.hasNext()) {
             String key = keys.next();
@@ -104,16 +104,33 @@ public class Context implements EventStateChangeConcerner {
 
     private void loadControllersAviable() {
         List<Controller> controllers = operators.retrieveOnlineControllers();
-        HashMap<String, User> cMap = new HashMap<String, User>();
-        for (User user : controllers) {
+        HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
+        HashMap<Integer, List<Integer>> eventsController = (HashMap<Integer, List<Integer>>) variables.get(EVENTS_CONTROLLER);
+        HashMap<Integer, Integer> eventsDoneB=new HashMap<>();
+        HashMap<Integer, List<Integer>> eventsControllerB=new HashMap<>();
+        HashMap<String, Controller> cMap = new HashMap<String, Controller>();
+        for (Controller user : controllers) {
             cMap.put(user.getId() + "", user);
+            if(eventsDone.containsKey(user.getId())){
+                eventsDoneB.put(user.getId(), eventsDone.get(user.getId()));
+            }else{
+                eventsDoneB.put(user.getId(),0);
+            }
+            if(eventsController.containsKey(user.getId())){
+                eventsControllerB.put(user.getId(), eventsController.get(user.getId()));
+            }else{
+                eventsControllerB.put(user.getId(), new ArrayList<>());
+            }
+
         }
         setValueForVar(CONTROLLERS, cMap);
+        setValueForVar(EVENTS_DONE, eventsDoneB);
+        setValueForVar(EVENTS_CONTROLLER, eventsControllerB);
 
     }
 
     private void loadPrioritiesAndThreshold() {
-        Iterable<Category> categoriesList = categories.retrieveAll();
+        List<Category> categoriesList = categories.retrieveAll();
         HashSet<Integer> priorities = new HashSet<>();
         HashMap<Integer, Double> threshold = new HashMap<Integer, Double>();
 
@@ -134,12 +151,12 @@ public class Context implements EventStateChangeConcerner {
     }
 
     private void loadEventsDone() {
-        HashMap<Long, Integer> eventsDone = (HashMap<Long, Integer>) variables.get("eventsDone");
-        List<Event> lEvents = (List<Event>) variables.get("lastEvents");
+        HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
+        List<Event> lEvents = (List<Event>) variables.get(LAST_EVENTS);
         for (Event event : lEvents) {
             if (isEventDone(event)) {
                 List<EventTrack> tracks = event.getEventsTracks();
-                long idController = -1;
+                int idController = -1;
                 for (int i = tracks.size() - 1; i >= 0; i--) {
                     State state = tracks.get(i).getState();
                     if (state.getName().equals(StateValue.In_Proccess.name())) {
@@ -149,7 +166,7 @@ public class Context implements EventStateChangeConcerner {
                 }
                 Integer val = eventsDone.get(idController);
                 if (val == null) {
-                    eventsDone.put(idController, 1);
+                    val=0;
                 }
                 val++;
                 eventsDone.put(idController, val);
@@ -179,12 +196,12 @@ public class Context implements EventStateChangeConcerner {
     }
 
     private void loadEventsController() {
-        HashMap<Long, Integer> eventsDone = (HashMap<Long, Integer>) variables.get("eventsDone");
-        HashMap<Long, List<Integer>> eventsController = (HashMap<Long, List<Integer>>) variables
-                .get("eventsController");
-        Iterator<Long> keys = eventsDone.keySet().iterator();
-        while (keys.hasNext()) {
-            long key = keys.next();
+        HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
+        HashMap<Integer, List<Integer>> eventsController = (HashMap<Integer, List<Integer>>) variables.get(EVENTS_CONTROLLER);
+        HashMap<String, Controller> controllers= (HashMap<String, Controller>) variables.get(CONTROLLERS);
+        Iterator<Controller> values=controllers.values().iterator();
+        while(values.hasNext()){
+            int key = values.next().getId();
             Integer lastElement = eventsDone.get(key);
             if (lastElement == null) {
                 lastElement = 0;

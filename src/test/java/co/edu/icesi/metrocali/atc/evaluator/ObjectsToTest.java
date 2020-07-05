@@ -3,9 +3,13 @@ package co.edu.icesi.metrocali.atc.evaluator;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
+import co.edu.icesi.metrocali.atc.constants.NotificationType;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
@@ -13,49 +17,64 @@ import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
-import lombok.Data;
+import co.edu.icesi.metrocali.atc.vos.StateNotification;
+import lombok.Getter;
 
-@Data
+@Getter
 public class ObjectsToTest {
     private static ObjectsToTest instance;
     private List<Event> events;
     private List<Controller> users;
     private List<Category> subCategories;
-    private List<State> states;
-    private List<EventTrack> eventStates;
-    private List<UserTrack> userStates;
+    private HashMap<StateValue,State> states;
+    private List<StateNotification> notificationsIncrease;
+    private List<StateNotification> notificationsDecrease;
+    private HashMap<Integer,EvalParameter> parameters;
 
     private ObjectsToTest(){
         createSubCategories();
         createStates();
         createUsers();
         createEvents();
-        createEventStates();
-        createUserStates();
+        createNotifications();
+        createParameters();
     }
 
-    private void createUserStates() {
-        userStates=new ArrayList<>();
-        userStates.add(createUserState(users.get(0),states.get(0),new Timestamp(System.currentTimeMillis()+1000*60*-15),new Timestamp(System.currentTimeMillis()+1000*60*-10)));//5mn disponible
-        userStates.add(createUserState(users.get(0),states.get(1),new Timestamp(System.currentTimeMillis()+1000*60*-10),new Timestamp(System.currentTimeMillis()+1000*60*-3)));//7mn ocupado
-        userStates.add(createUserState(users.get(0),states.get(2),new Timestamp(System.currentTimeMillis()+1000*60*-3),new Timestamp(System.currentTimeMillis())));//3mn no disponible
-
-        userStates.add(createUserState(users.get(1),states.get(0),new Timestamp(System.currentTimeMillis()+1000*60*-12),new Timestamp(System.currentTimeMillis()+1000*60*-8)));//4mn disponible
-        userStates.add(createUserState(users.get(1),states.get(1),new Timestamp(System.currentTimeMillis()+1000*60*-8),new Timestamp(System.currentTimeMillis()+1000*60*-1)));//7mn ocupado
-        userStates.add(createUserState(users.get(1),states.get(2),new Timestamp(System.currentTimeMillis()+1000*60*-1),new Timestamp(System.currentTimeMillis()+1000*60)));//2mn no disponible
-
-        userStates.add(createUserState(users.get(2),states.get(0),new Timestamp(System.currentTimeMillis()+1000*60*-20),new Timestamp(System.currentTimeMillis()+1000*60*-8)));//12mn disponible
-        userStates.add(createUserState(users.get(2),states.get(1),new Timestamp(System.currentTimeMillis()+1000*60*-8),new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn ocupado
-        userStates.add(createUserState(users.get(2),states.get(2),new Timestamp(System.currentTimeMillis()+1000*60*-5),new Timestamp(System.currentTimeMillis()+1000*60*-1)));//4mn no disponible
-        userStates.add(createUserState(users.get(2),states.get(8),new Timestamp(System.currentTimeMillis()+1000*60*-1),new Timestamp(System.currentTimeMillis()+1000*60)));//2mn disponible
-
-        userStates.add(createUserState(users.get(3),states.get(0),new Timestamp(System.currentTimeMillis()+1000*60*-10),new Timestamp(System.currentTimeMillis()+1000*60*-5)));//5mn disponible
-        userStates.add(createUserState(users.get(3),states.get(1),new Timestamp(System.currentTimeMillis()+1000*60*-5),new Timestamp(System.currentTimeMillis()+1000*60*-1)));//4mn ocupado
-        userStates.add(createUserState(users.get(3),states.get(2),new Timestamp(System.currentTimeMillis()+1000*60*-1),new Timestamp(System.currentTimeMillis()+1000*60)));//2mn no disponible
-        userStates.add(createUserState(users.get(3),states.get(1),new Timestamp(System.currentTimeMillis()+1000*60),new Timestamp(System.currentTimeMillis()+1000*60*4)));//3mn ocupado
-
+    private void createParameters() {
+        parameters=new HashMap<>();
+        for (Category category: subCategories) {
+            int key=category.getBasePriority();
+            parameters.put(key, createParameter("threshold"+key, key));
+        }
     }
-    private UserTrack createUserState(User user,State state,Timestamp start,Timestamp end){
+
+    private EvalParameter createParameter(String name,double value){
+        EvalParameter parameter=new EvalParameter();
+        parameter.setName(name);
+        parameter.setValue(value);
+        return parameter;
+    }
+
+    private void createNotifications() {
+        notificationsIncrease=new ArrayList<>();
+        notificationsDecrease=new ArrayList<>();
+        for (Event event : events) {
+            notificationsIncrease.add(createNotification(event,NotificationType.New_Event_Entity));
+            notificationsDecrease.add(createNotification(event,NotificationType.New_Event_Assignment));
+        }
+    }
+    private StateNotification createNotification(Event event,NotificationType type){
+        Object[] elementsInvolved = {event};
+		StateNotification stateEvent = 
+			new StateNotification(
+				type, 
+				Optional.ofNullable(null),
+				elementsInvolved
+            );
+        return stateEvent;
+    }
+
+    private UserTrack createUserState(User user, State state, Timestamp start, Timestamp end) {
         UserTrack userState=new UserTrack();
         userState.setEndTime(end);
         userState.setStartTime(start);
@@ -63,68 +82,72 @@ public class ObjectsToTest {
         userState.setUser(user);
         return userState;
     }
-    private void createEventStates() {
-        eventStates=new ArrayList<>();// Estados para eventos >=3
-        eventStates.add(createEventState(1,events.get(0), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 0
-        eventStates.add(createEventState(2,events.get(0), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(3,events.get(0), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
 
-        eventStates.add(createEventState(4,events.get(1), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 3
-        eventStates.add(createEventState(5,events.get(1), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(6,events.get(1), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-        eventStates.add(createEventState(7,events.get(1), states.get(6), new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()+1000*60*2)));//2mn en espera
-        eventStates.add(createEventState(8,events.get(1), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*2), new Timestamp(System.currentTimeMillis()+1000*60*5)));//3mn en proceso
-
-        eventStates.add(createEventState(9,events.get(2), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-12), new Timestamp(System.currentTimeMillis()+1000*60*-9)));//3mn pendiente 8
-        eventStates.add(createEventState(10,events.get(2), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-9), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//4mn Asignado
-        eventStates.add(createEventState(11,events.get(2), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-        eventStates.add(createEventState(12,events.get(3), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 11
-        eventStates.add(createEventState(13,events.get(3), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(14,events.get(3), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-        eventStates.add(createEventState(15,events.get(4), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 14
-        eventStates.add(createEventState(16,events.get(4), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-
-        eventStates.add(createEventState(17,events.get(5), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 16
-        eventStates.add(createEventState(18,events.get(5), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(19,events.get(5), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-        eventStates.add(createEventState(20,events.get(6), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 19
-        eventStates.add(createEventState(21,events.get(6), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(22,events.get(6), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-        eventStates.add(createEventState(23,events.get(7), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 22
-        eventStates.add(createEventState(24,events.get(7), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(25,events.get(7), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-        eventStates.add(createEventState(26,events.get(8), states.get(3), new Timestamp(System.currentTimeMillis()+1000*60*-10), new Timestamp(System.currentTimeMillis()+1000*60*-8)));//2mn pendiente 25
-        eventStates.add(createEventState(27,events.get(8), states.get(4), new Timestamp(System.currentTimeMillis()+1000*60*-8), new Timestamp(System.currentTimeMillis()+1000*60*-5)));//3mn Asignado
-        eventStates.add(createEventState(28,events.get(8), states.get(5), new Timestamp(System.currentTimeMillis()+1000*60*-5), new Timestamp(System.currentTimeMillis())));//5mn en proceso
-
-    }
-    private EventTrack createEventState(long id,Event event,State state,Timestamp start,Timestamp end){
+    private EventTrack createEventState(long id,State state,Timestamp start,Timestamp end,Controller user){
         EventTrack eventState=new EventTrack();
         eventState.setEndTime(end);
         eventState.setStartTime(start);
         eventState.setState(state);
         eventState.setId(id);
+        eventState.setUser(user);
         return eventState;
     }
 
     private void createEvents() {
         events=new ArrayList<>();
-        events.add(createEvent(1, 450, new Timestamp(System.currentTimeMillis()+1000*60*5), subCategories.get(0), states.get(3), users.get(0)));
-        events.add(createEvent(2, 900, new Timestamp(System.currentTimeMillis()+1000*60*2), subCategories.get(1), states.get(4), users.get(1)));
-        events.add(createEvent(3, 1000, new Timestamp(System.currentTimeMillis()+1000*60), subCategories.get(2), states.get(5), users.get(2)));
-        events.add(createEvent(4, 450, new Timestamp(System.currentTimeMillis()-1000*60*4), subCategories.get(3), states.get(6), users.get(3)));
-        events.add(createEvent(5, 450, new Timestamp(System.currentTimeMillis()-1000*60*10), subCategories.get(3), states.get(7), users.get(3)));
-        events.add(createEvent(6, 400, new Timestamp(System.currentTimeMillis()+1000*60*0), subCategories.get(2), states.get(5), users.get(3)));
-        events.add(createEvent(7, 450, new Timestamp(System.currentTimeMillis()+1000*60*(-10)), subCategories.get(1), states.get(3), users.get(2)));
-        events.add(createEvent(8, 450, new Timestamp(System.currentTimeMillis()+1000*60), subCategories.get(0), states.get(6), users.get(1)));
-        events.add(createEvent(9, 450, new Timestamp(System.currentTimeMillis()+1000*60*0), subCategories.get(1), states.get(5), users.get(0)));
+        Event event1=createEvent(1, 450, new Timestamp(System.currentTimeMillis()-1000*60*7), subCategories.get(0), users.get(0));//0
+        Event event2=createEvent(2, 900, new Timestamp(System.currentTimeMillis()-1000*60*10), subCategories.get(1), users.get(1));//1
+        Event event3=createEvent(3, 1000, new Timestamp(System.currentTimeMillis()-1000*60*6), subCategories.get(2), users.get(2));//2
+        Event event4=createEvent(4, 450, new Timestamp(System.currentTimeMillis()-1000*60*4), subCategories.get(3), users.get(3));//3
+        Event event5=createEvent(5, 450, new Timestamp(System.currentTimeMillis()-1000*60*10), subCategories.get(3), users.get(3));//4
+        Event event6=createEvent(6, 400, new Timestamp(System.currentTimeMillis()-1000*60*7), subCategories.get(2), users.get(3));//5
+        Event event7=createEvent(7, 450, new Timestamp(System.currentTimeMillis()-1000*60*10), subCategories.get(1), users.get(2));//6
+        Event event8=createEvent(8, 450, new Timestamp(System.currentTimeMillis()-1000*60*2), subCategories.get(1), users.get(2));//7
+       
+        event1.addEventTrack(createEventState(1, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*4),users.get(0)));//3mn
+        event1.addEventTrack(createEventState(2, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*4), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(0)));//2mn
+        event1.addEventTrack(createEventState(3, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(0)));//>2mn
+
+        event2.addEventTrack(createEventState(4, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(1)));//2mn
+        event2.addEventTrack(createEventState(5, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*6),users.get(1)));//2mn
+        event2.addEventTrack(createEventState(6, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*6), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(1)));//4mn
+        event2.addEventTrack(createEventState(7, states.get(StateValue.Verification), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(1)));//>2mn
+
+        event3.addEventTrack(createEventState(8, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*6), new Timestamp(System.currentTimeMillis()-1000*60*5),users.get(2)));//1mn
+        event3.addEventTrack(createEventState(9, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*5), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//3mn
+        event3.addEventTrack(createEventState(10, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2mn
+
+        event4.addEventTrack(createEventState(11, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*4), new Timestamp(System.currentTimeMillis()-1000*60*3),users.get(3)));//1mn
+        event4.addEventTrack(createEventState(12, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(3)));//2mn
+        event4.addEventTrack(createEventState(13, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(3)));//1mn
+
+        event5.addEventTrack(createEventState(14, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(0)));//2mn
+        event5.addEventTrack(createEventState(15, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(0)));//1mn
+        event5.addEventTrack(createEventState(16, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*3),users.get(0)));//4mn
+        event5.addEventTrack(createEventState(17, states.get(StateValue.On_Hold), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(0)));//2mn
+        event5.addEventTrack(createEventState(18, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(0)));//>1
+
+        event6.addEventTrack(createEventState(19, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*5),users.get(1)));//2mn
+        event6.addEventTrack(createEventState(20, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*5),null,users.get(1)));//>5mn
+
+        event7.addEventTrack(createEventState(21, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(2)));//2mn
+        event7.addEventTrack(createEventState(22, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(2)));//1mn
+        event7.addEventTrack(createEventState(23, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//5mn
+        event7.addEventTrack(createEventState(24, states.get(StateValue.Verification), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2
+
+        event8.addEventTrack(createEventState(21, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(3)));//>2
+
+        events.add(event1);
+        events.add(event2);
+        events.add(event3);
+        events.add(event4);
+        events.add(event5);
+        events.add(event6);
+        events.add(event7);
+        events.add(event8);
+
     }   
-    private Event createEvent(long id,int priority,Timestamp creation,Category sub,State state,User user){
+    private Event createEvent(long id,int priority,Timestamp creation,Category sub,User user){
         Event event=new Event();
         event.setCreation(creation);
         event.setId(id);
@@ -134,10 +157,29 @@ public class ObjectsToTest {
 
     private void createUsers() {
         users=new ArrayList<>();
-        users.add(createUser(1,"con1",states.get(0)));//2 eventos
-        users.add(createUser(2,"con2",states.get(0)));//2 eventos
-        users.add(createUser(3,"con3",states.get(0)));//2 eventos
-        users.add(createUser(4,"con4",states.get(0)));//3 eventos
+        Controller controller1=createUser(1,"con1",states.get(StateValue.Available));
+        Controller controller2=createUser(2,"con2",states.get(StateValue.Available));
+        Controller controller3=createUser(3,"con3",states.get(StateValue.Available));
+        Controller controller4=createUser(4,"con4",states.get(StateValue.Available));
+
+        controller1.addUserTrack(createUserState(controller1, states.get(StateValue.Available), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*7)));//3mn
+        controller1.addUserTrack(createUserState(controller1, states.get(StateValue.Busy), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*2)));//5mn
+        controller1.addUserTrack(createUserState(controller1, states.get(StateValue.Unavailable), new Timestamp(System.currentTimeMillis()-1000*60*2), null));//>2mn
+
+        controller2.addUserTrack(createUserState(controller2, states.get(StateValue.Available), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*3)));//4mn
+        controller2.addUserTrack(createUserState(controller2, states.get(StateValue.Busy), new Timestamp(System.currentTimeMillis()-1000*60*3), null));//>3mn
+
+        controller3.addUserTrack(createUserState(controller3, states.get(StateValue.Available), new Timestamp(System.currentTimeMillis()-1000*60*14), new Timestamp(System.currentTimeMillis()-1000*60*10)));//4mn
+        controller3.addUserTrack(createUserState(controller3, states.get(StateValue.Busy), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*3)));//7mn
+        controller3.addUserTrack(createUserState(controller3, states.get(StateValue.Unavailable), new Timestamp(System.currentTimeMillis()-1000*60*3), null));//>3mn
+
+        controller4.addUserTrack(createUserState(controller4, states.get(StateValue.Available), new Timestamp(System.currentTimeMillis()-1000*60*4), null));//>4mn
+
+        users.add(controller1);
+        users.add(controller2);
+        users.add(controller3);
+        users.add(controller4);
+
         
     }
     private Controller createUser(int id,String name,State state){
@@ -148,19 +190,16 @@ public class ObjectsToTest {
     }
 
     private void createStates() {
-        states=new ArrayList<>();
+        states=new HashMap<>();
 
-        states.add(createState(StateValue.Available.name()));//0
-        states.add(createState(StateValue.Busy.name()));//1
-        states.add(createState(StateValue.Unavailable.name()));//2
-
-        states.add(createState(StateValue.Pending.name()));//3
-        states.add(createState(StateValue.Assigned.name()));//4
-        states.add(createState(StateValue.In_Proccess.name()));//5
-        states.add(createState(StateValue.On_Hold.name()));//6
-        states.add(createState(StateValue.Verification.name()));//7
-
-        states.add(createState(StateValue.Assigned.name()));//8
+        states.put(StateValue.Available,createState(StateValue.Available.name()));//0
+        states.put(StateValue.Busy,createState(StateValue.Busy.name()));//1
+        states.put(StateValue.Unavailable,createState(StateValue.Unavailable.name()));//2
+        states.put(StateValue.Pending,createState(StateValue.Pending.name()));//3
+        states.put(StateValue.Assigned,createState(StateValue.Assigned.name()));//4
+        states.put(StateValue.In_Proccess,createState(StateValue.In_Proccess.name()));//5
+        states.put(StateValue.On_Hold,createState(StateValue.On_Hold.name()));//6
+        states.put(StateValue.Verification,createState(StateValue.Verification.name()));//7
 
     }
 

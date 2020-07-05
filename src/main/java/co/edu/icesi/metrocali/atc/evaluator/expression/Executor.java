@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
-import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.services.evaluator.MeasurementsService;
 import co.edu.icesi.metrocali.atc.services.evaluator.VariableService;
 
@@ -43,17 +42,6 @@ public class Executor {
         } catch (Exception e) {
             return "Error: la expresion '" + expression
                     + "' no es correcta, asegurese de cumplir con la sintaxis suministrada";
-        }
-    }
-
-    public Object isExpressionRigth(String expression) {
-        Functions con = context.getRootObject();
-        interpreter.setRootObject(con);
-        try {
-            Object result = interpreter.parseExpression(expression);
-            return result;
-        } catch (Exception e) {
-            return false;
         }
     }
 
