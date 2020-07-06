@@ -10,6 +10,7 @@ import java.util.Optional;
 import co.edu.icesi.metrocali.atc.constants.NotificationType;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
+import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
@@ -30,6 +31,7 @@ public class ObjectsToTest {
     private List<StateNotification> notificationsIncrease;
     private List<StateNotification> notificationsDecrease;
     private HashMap<Integer,EvalParameter> parameters;
+    private List<Variable> variables;
 
     private ObjectsToTest(){
         createSubCategories();
@@ -38,6 +40,15 @@ public class ObjectsToTest {
         createEvents();
         createNotifications();
         createParameters();
+        createVariables();
+    }
+
+    private void createVariables() {
+    }
+
+    private Variable createVariable(){
+        Variable variable=new Variable();
+        return variable;
     }
 
     private void createParameters() {
