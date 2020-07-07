@@ -2,7 +2,6 @@ package co.edu.icesi.metrocali.atc.evaluator.expression;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;

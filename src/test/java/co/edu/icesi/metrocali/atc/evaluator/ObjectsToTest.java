@@ -44,10 +44,19 @@ public class ObjectsToTest {
     }
 
     private void createVariables() {
+        variables=new ArrayList<>();
+        variables.add(createVariable("var1", "#thresholds[1000]"));//1000
+        variables.add(createVariable("var2", "sum(#priorities)"));//3930
+        variables.add(createVariable("var3", "len(#priorities)"));//4
+        variables.add(createVariable("var4", "sum(timesInPendingState(#lastEvents))"));//
+        variables.add(createVariable("var5", "sum(map({1,2,3},'#value*2'))"));//>15
     }
 
-    private Variable createVariable(){
+    private Variable createVariable(String name,String expression){
         Variable variable=new Variable();
+        variable.setNameVariable(name);
+        variable.setLastFormulaExpression(expression);
+        variable.setIsKPI(true);
         return variable;
     }
 
