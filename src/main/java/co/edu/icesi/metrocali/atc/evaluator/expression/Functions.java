@@ -327,5 +327,40 @@ public class Functions {
         stayTime/=(1000*60);
         return stayTime;
     }
+    @EvalFunction(
+        description ="Retorna la representación en cadena del objeto")
+    public String s(Object o){
+        return o.toString();
+    }
+
+    //Math Functions
+    @EvalFunction(
+        description ="Retorna el seno del angulo, en radianes, pasado por parámetro")
+    public double sin(double n){
+        return Math.sin(n);
+    }
+    @EvalFunction(
+        description ="Retorna el coseno del angulo, en radianes, pasado por parámetro")
+    public double cos(double n){
+        return Math.cos(n);
+    }
+    @EvalFunction(
+        description ="Retorna el resultado de elevar el primer parámetro al segundo")
+        @Info(key = "examples", value = "pow(2,3)=2^3=8")
+    public double pow(double a, double b){
+        return Math.pow(a, b);
+    }
+    @EvalFunction(
+        description ="Retorna la raiz cuadrada del número pasado por parámetro ")
+    public double sqrt(double a){
+        return Math.sqrt(a);
+    }
+    @EvalFunction(
+        description ="Convierte un angulo medido en grados a uno en radianes")
+    public double toRadians(double angle){
+        return Math.toRadians(angle);
+    }
+
+
 
 }

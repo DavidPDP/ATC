@@ -18,9 +18,11 @@ import co.edu.icesi.metrocali.atc.evaluator.expression.FunctionInfo;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.FormulasRepository;
 import co.edu.icesi.metrocali.atc.services.notifications.NotificationManager;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
+import lombok.extern.log4j.Log4j2;
 
 
 @Service
+@Log4j2
 public class ExpressionsService {
 
     @Autowired
@@ -55,7 +57,7 @@ public class ExpressionsService {
             try {
                 addVariable(variable);
             } catch (Exception e) {
-
+                log.info(variable.getNameVariable()+": "+e.getMessage());
             }
         }
 
@@ -81,6 +83,7 @@ public class ExpressionsService {
         Optional<Formula> formulaWrapper =
                 formulas.retrieveActivesByVariable(variable.getNameVariable());
         if (formulaWrapper.isPresent()) {
+            context.setValueForVar(variable.getNameVariable(), last);
             Formula formula = formulaWrapper.get();
             Object result = executor.evaluateExpression(formula.getExpression());
             if (result instanceof String) {
@@ -90,8 +93,8 @@ public class ExpressionsService {
                 }
             }
 
-            context.setValueForVar(variable.getNameVariable(), last);
         } else {
+            log.info("No existe una fórmula para la variable: " + variable.getNameVariable());
             throw new Exception(
                     "No existe una fórmula para la variable: " + variable.getNameVariable());
         }

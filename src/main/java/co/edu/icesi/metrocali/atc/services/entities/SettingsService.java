@@ -92,7 +92,7 @@ public class SettingsService implements RecoveryService {
 			return setting.get();
 		}else {
 			//Deep strategy
-			return settingsRepository.retrieve(key.name());			
+			return settingsRepository.retrieve(key.name());
 		}
 		
 	}

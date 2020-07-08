@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.evaluator.expression;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import co.edu.icesi.metrocali.atc.constants.NotificationType;
+import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
@@ -21,10 +23,14 @@ import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
+import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
+import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
+import co.edu.icesi.metrocali.atc.services.entities.SettingsService;
 import co.edu.icesi.metrocali.atc.services.notifications.events.EventStateChangeConcerner;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
@@ -58,6 +64,10 @@ public class Context implements EventStateChangeConcerner {
     private CategoriesRepository categories;
     @Autowired
     private OperatorsRepository operators;
+    @Autowired
+    private SettingsRepository settings;
+    @Autowired
+    private EventsRepository events;
 
     @PostConstruct
     public void loadSystemVariables() {
@@ -71,6 +81,16 @@ public class Context implements EventStateChangeConcerner {
         addVar(CONTROLLERS, new HashMap<String, Controller>(), "");
         loadPrioritiesAndThreshold();
         loadVariableDesc();
+        loadEvents();
+        fillVariables();
+    }
+    private void loadEvents(){
+        Setting interval = settings.retrieve(SettingKey.Recover_Time.name());
+		List<Event> eventsResult = Collections.emptyList();			
+        eventsResult = events.retrieveAll(interval.getValue());
+        variables.put(LAST_EVENTS, eventsResult);
+        updateLastEvent();
+					
     }
 
     private void loadVariableDesc() {
