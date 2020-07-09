@@ -45,14 +45,14 @@ public class Executor {
         }
     }
 
-    public HashMap<String, Double> evaluateKPIs() {
+    public HashMap<String, Measurement> evaluateKPIs() {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Date currentDate = Date.from(now.toInstant());
         List<Variable> kpis = variables.getKPIs();
         Functions con = context.getRootObject();
         context.fillVariables();
         interpreter.setRootObject(con);
-        HashMap<String, Double> results = new HashMap<>();
+        HashMap<String, Measurement> results = new HashMap<>();
         List<Measurement> measurements = new ArrayList<>();
         for (Variable variable : kpis) {
 
@@ -64,7 +64,7 @@ public class Executor {
             measurements.add(measurement);
             measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
             measurement.setEndDate(currentDate);
-            results.put(variable.getNameVariable(), value);
+            results.put(variable.getNameVariable(), measurement);
         }
         measurementsService.saveMeasurements(measurements);
         LAST_EXECTUTION = now;
@@ -79,8 +79,8 @@ public class Executor {
     }
 
     // TODO: remove method and see expressionService.calculateVariables
-    public HashMap<String, Double> temporalEvaluateKPI() {
-        HashMap<String, Double> results = new HashMap<>();
+    public HashMap<String, Measurement> temporalEvaluateKPI() {
+        HashMap<String, Measurement> results = new HashMap<>();
         List<Variable> kpis = variables.getKPIs();
         Timestamp now = new Timestamp(System.currentTimeMillis());
         Date currentDate = Date.from(now.toInstant());
@@ -93,7 +93,7 @@ public class Executor {
             measurements.add(measurement);
             measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
             measurement.setEndDate(currentDate);
-            results.put(variable.getNameVariable(), value);
+            results.put(variable.getNameVariable(), measurement);
         }
         measurementsService.saveMeasurements(measurements);
         LAST_EXECTUTION = now;

@@ -56,13 +56,7 @@ public class ExpressionTest {
         double value=(double)expresion.evaluateExpression("sum({1,2,3,4})");
         assertTrue(value==10);
     }
-    @Test
-    public void calculateKPITest(){
-        // calculateKPIStage();
-        // expresion.calculateKPI();
 
-
-    }
     @Test
     public void addVariableTest(){
 
