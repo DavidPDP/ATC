@@ -73,7 +73,7 @@ public class FunctionsTest {
         for (Double double1 : result) {
             assertTrue( double1==5,"Sum value "+double1);            
         }
-        double max=functions.max(list1);
+        double max=functions.max((Double[]) list1.toArray());
         assertTrue(max==3,"max to list "+max);
     }
 

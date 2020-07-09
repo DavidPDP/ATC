@@ -50,6 +50,7 @@ public class Executor {
         Date currentDate = Date.from(now.toInstant());
         List<Variable> kpis = variables.getKPIs();
         Functions con = context.getRootObject();
+        context.fillVariables();
         interpreter.setRootObject(con);
         HashMap<String, Double> results = new HashMap<>();
         List<Measurement> measurements = new ArrayList<>();

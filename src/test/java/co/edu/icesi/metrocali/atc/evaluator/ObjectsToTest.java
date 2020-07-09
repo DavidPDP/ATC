@@ -32,6 +32,7 @@ public class ObjectsToTest {
     private List<StateNotification> notificationsDecrease;
     private HashMap<Integer,EvalParameter> parameters;
     private List<Variable> variables;
+    private HashMap<Integer,Double> thresholds;
 
     private ObjectsToTest(){
         createSubCategories();
@@ -241,6 +242,12 @@ public class ObjectsToTest {
         subCategories.add(createSubCategory(2,"Situación urgente ", 990));
         subCategories.add(createSubCategory(3,"Vandalismo", 980));
         subCategories.add(createSubCategory(4,"Sospechoso a bordo", 960));
+
+        thresholds=new HashMap<>();
+        thresholds.put(1000,5.0);
+        thresholds.put(990,7.0);
+        thresholds.put(980,6.5);
+        thresholds.put(960,5.0);
     }
 
     private Category createSubCategory(int id,String name,int priority){

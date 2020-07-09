@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
@@ -20,6 +21,9 @@ import co.edu.icesi.metrocali.atc.evaluator.expression.EvalFunction.Info;
 
 @Service
 public class Functions {
+
+    @Autowired
+    private Context context;
 
     @EvalFunction(description = "Suma de los números del parámetro")
     public double sum(List<Double> values) {
@@ -105,7 +109,7 @@ public class Functions {
     }
 
     @EvalFunction(description = "máximo número dentro de la lista")
-    public double max(List<Double> list) {
+    public double max(Double ... list) {
         double max = Double.MIN_VALUE;
         for (Double num : list) {
             max = Double.max(num, max);
@@ -148,7 +152,11 @@ public class Functions {
                 boolean inHold =
                         eventTrack.getState().getName().equalsIgnoreCase(StateValue.On_Hold.name());
                 if (inHold) {
-                    time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
+                    Timestamp last=eventTrack.getEndTime();
+                    if(last==null){
+                        last=new Timestamp(System.currentTimeMillis());
+                    }
+                    time += last.getTime() - eventTrack.getStartTime().getTime();
                 }
             }
             time/=(1000*60);
@@ -176,7 +184,11 @@ public class Functions {
                         eventTrack.getState().getName().equalsIgnoreCase(StateValue.Pending.name());
 
                 if (stayTime) {
-                    time += eventTrack.getEndTime().getTime() - eventTrack.getStartTime().getTime();
+                    Timestamp last=eventTrack.getEndTime();
+                    if(last==null){
+                        last=new Timestamp(System.currentTimeMillis());
+                    }
+                    time += last.getTime() - eventTrack.getStartTime().getTime();
                 }
             }
             time/=(1000*60);
@@ -249,6 +261,8 @@ public class Functions {
     public List<?> map(List<?> elements, String expression) {
         ExpressionParser parser = new SpelExpressionParser();
         StandardEvaluationContext context = new StandardEvaluationContext(this);
+        HashMap<String,Object> variables=this.context.getVariables();
+        context.setVariables(variables);
         List<Object> ret = new ArrayList<>();
         for (Object object : elements) {
             context.setVariable("value", object);
@@ -264,11 +278,14 @@ public class Functions {
     public HashMap<?, ?> map(HashMap<?, ?> elements, String expression) {
         ExpressionParser parser = new SpelExpressionParser();
         StandardEvaluationContext context = new StandardEvaluationContext(this);
+        HashMap<String,Object> variables=this.context.getVariables();
+        context.setVariables(variables);
         HashMap<Object, Object> ret = new HashMap<>();
         Iterator<?> keys = elements.keySet().iterator();
         while (keys.hasNext()) {
             Object key = keys.next();
-            context.setVariable("value", elements.get(key));
+            Object hashVal=elements.get(key);
+            context.setVariable("value", hashVal);
             Object value = parser.parseExpression(expression).getValue(context);
             ret.put(key, value);
         }

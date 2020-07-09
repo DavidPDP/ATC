@@ -56,6 +56,7 @@ public class ExpressionsService {
         for (Variable variable : variables) {
             try {
                 addVariable(variable);
+                log.info("añadida al contexto: "+variable.getNameVariable());
             } catch (Exception e) {
                 log.info(variable.getNameVariable()+": "+e.getMessage());
             }

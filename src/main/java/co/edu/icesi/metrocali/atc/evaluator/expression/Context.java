@@ -82,7 +82,6 @@ public class Context implements EventStateChangeConcerner {
         loadPrioritiesAndThreshold();
         loadVariableDesc();
         loadEvents();
-        fillVariables();
     }
     private void loadEvents(){
         Setting interval = settings.retrieve(SettingKey.Recover_Time.name());
@@ -111,9 +110,9 @@ public class Context implements EventStateChangeConcerner {
                 "Hashmap que almacena todas las prioridades disponibles para cualquier tipo de evento.");
     }
 
-    private void fillVariables() {
+    public void fillVariables() {
         loadEventsDone();
-        loadControllersAviable();
+        loadControllers(operators.retrieveOnlineControllers());
         loadEventsController();
         Iterator<String> keys = variables.keySet().iterator();
         while (keys.hasNext()) {
@@ -122,8 +121,10 @@ public class Context implements EventStateChangeConcerner {
         }
     }
 
-    private void loadControllersAviable() {
-        List<Controller> controllers = operators.retrieveOnlineControllers();
+    public void loadControllers(List<Controller> controllers) {
+        if(controllers.isEmpty()){
+            return;
+        }
         HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
         HashMap<Integer, List<Integer>> eventsController = (HashMap<Integer, List<Integer>>) variables.get(EVENTS_CONTROLLER);
         HashMap<Integer, Integer> eventsDoneB=new HashMap<>();
@@ -141,7 +142,6 @@ public class Context implements EventStateChangeConcerner {
             }else{
                 eventsControllerB.put(user.getId(), new ArrayList<>());
             }
-
         }
         setValueForVar(CONTROLLERS, cMap);
         setValueForVar(EVENTS_DONE, eventsDoneB);
@@ -167,7 +167,7 @@ public class Context implements EventStateChangeConcerner {
             }
         }
         setValueForVar(THRESHOLDS, threshold);
-        setValueForVar(PRIORITIES, priorities);
+        setValueForVar(PRIORITIES, new ArrayList<>(priorities));
     }
 
     private void loadEventsDone() {
@@ -237,13 +237,13 @@ public class Context implements EventStateChangeConcerner {
     }
 
     public Functions getRootObject() {
-        fillVariables();
         return functions;
     }
 
     public void addVar(String name, Object val, String desc) {
         variables.put(name, val);
         variablesDesc.put(name, desc);
+        interpreter.setVariable(name, val);
     }
 
     public Object getVar(String name) {
@@ -263,6 +263,7 @@ public class Context implements EventStateChangeConcerner {
 
     public void setValueForVar(String name, Object value) {
         variables.put(name, value);
+        interpreter.setVariable(name, value);
     }
 
     public void setValueForVar(HashMap<String, ?> map) {
@@ -273,6 +274,9 @@ public class Context implements EventStateChangeConcerner {
         }
     }
 
+    public HashMap<String,Object> getVariables(){
+        return variables;
+    }
     public HashMap<String, String> getVariablesDesc() {
         return variablesDesc;
     }
