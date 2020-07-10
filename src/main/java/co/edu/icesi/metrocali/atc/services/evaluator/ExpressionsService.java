@@ -69,7 +69,7 @@ public class ExpressionsService {
 
         StateNotification notification =
                 new StateNotification(NotificationType.New_Measurements_Calculated,
-                        Optional.empty(), new Object[] {executor.temporalEvaluateKPI()});
+                        Optional.empty(), new Object[] {executor.evaluateKPIs()});
         notificationService.update(notification);
 
     }

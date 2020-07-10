@@ -59,7 +59,7 @@ public class ExpressionTest {
 
     @Test
     public void addVariableTest(){
-
+        expresion.calculateKPI();
     }
     @Test
     public void lqTest(){
@@ -197,7 +197,7 @@ public class ExpressionTest {
         DecimalFormat format=new DecimalFormat("0.000");
         List<Controller> controllers=ObjectsToTest.getInstance().getUsers();
         HashMap<Integer,Double> answers=new HashMap<>();
-        answers.put(1, 5.0);
+        answers.put(1, 0.50);
         answers.put(2, 0.427);
         answers.put(3, 0.499);
         answers.put(4, 0.000);
@@ -205,11 +205,16 @@ public class ExpressionTest {
             String expre="map(#controllers,'busyTime(#value)/controllerStay(#value)')['"+controller.getId()+"']";
             double result=(double)expresion.evaluateExpression(expre);
             double form=Double.parseDouble(format.format(result).replace(',', '.'));
-            boolean bool=form<=answers.get(controller.getId());
-            bool|=form>=answers.get(controller.getId())-0.0001;
+            boolean bool=form<=answers.get(controller.getId())+0.005;
+            bool&=form>=answers.get(controller.getId())-0.005;
             assertTrue(bool,form+"=="+answers.get(controller.getId()));            
         }
     }
-    
+    @Test
+    public void stdCRTest(){
+        String expre="stddev(toList(map(#controllers,'busyTime(#value)/controllerStay(#value)')))";
+        double result=(double)expresion.evaluateExpression(expre);
+        assertTrue(result>=0.20&&result<=0.25,result+"");
+    }
     
 }

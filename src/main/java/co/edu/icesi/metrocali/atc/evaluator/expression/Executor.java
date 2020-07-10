@@ -8,6 +8,7 @@ import java.util.List;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.expression.spel.SpelEvaluationException;
 import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Measurement;
 import co.edu.icesi.metrocali.atc.entities.evaluator.Variable;
@@ -39,7 +40,11 @@ public class Executor {
                 throw new Exception();
             }
             return result;
-        } catch (Exception e) {
+        } catch (SpelEvaluationException e) {
+            return "Error: la expresion '" + expression
+                    + "' no es correcta, asegurese de cumplir con la sintaxis suministrada- "+e.getInserts();
+        }
+        catch (Exception e) {
             return "Error: la expresion '" + expression
                     + "' no es correcta, asegurese de cumplir con la sintaxis suministrada";
         }
