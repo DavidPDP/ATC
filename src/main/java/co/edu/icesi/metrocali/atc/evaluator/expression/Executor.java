@@ -98,9 +98,11 @@ public class Executor {
             measurements.add(measurement);
             measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
             measurement.setEndDate(currentDate);
-            results.put(variable.getNameVariable(), measurement);
         }
-        measurementsService.saveMeasurements(measurements);
+        List<Measurement> addedMeasurements = measurementsService.saveMeasurements(measurements);
+        for(Measurement addedMeasurement : addedMeasurements){
+            results.put(addedMeasurement.getVariable().getNameVariable(), addedMeasurement);
+        }        
         LAST_EXECTUTION = now;
         return results;
     }
