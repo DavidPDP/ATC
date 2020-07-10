@@ -1,6 +1,7 @@
 package co.edu.icesi.metrocali.atc.services.evaluator;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
@@ -66,11 +67,17 @@ public class ExpressionsService {
 
 
     public void calculateKPI() {
-
+        HashMap<String,Measurement> results=executor.temporalEvaluateKPI();
+        Iterator<String> keys=results.keySet().iterator();
+        while(keys.hasNext()){
+            String key=keys.next();
+            context.setValueForVar(key, results.get(key).getValue());
+        }
         StateNotification notification =
                 new StateNotification(NotificationType.New_Measurements_Calculated,
-                        Optional.empty(), new Object[] {executor.evaluateKPIs()});
+                        Optional.empty(), new Object[] {results});
         notificationService.update(notification);
+
 
     }
 
