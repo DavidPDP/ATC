@@ -201,6 +201,10 @@ public class Functions {
             description = "eventos agrupados por prioridad en una hashMap (priority,List<Event>)")
     public HashMap<Integer, List<Event>> groupByPriority(List<Event> events) {
         HashMap<Integer, List<Event>> groupsByPriority = new HashMap<>();
+        List<Integer> priorities= (List<Integer>) context.getVar(Context.PRIORITIES);
+        for (Integer integer : priorities) {
+            groupsByPriority.put(integer, new ArrayList<Event>());
+        }
         for (Event event : events) {
 
             int priority = event.getCategory().getBasePriority();

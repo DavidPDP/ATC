@@ -60,16 +60,21 @@ public class Executor {
         HashMap<String, Measurement> results = new HashMap<>();
         List<Measurement> measurements = new ArrayList<>();
         for (Variable variable : kpis) {
-
-            String formulaExpression = variable.getLastFormulaExpression();
-            double value = (double) interpreter.parseExpression(formulaExpression);
-            Measurement measurement = new Measurement();
-            measurement.setValue(value);
-            measurement.setVariable(variable);
-            measurements.add(measurement);
-            measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
-            measurement.setEndDate(currentDate);
-            results.put(variable.getNameVariable(), measurement);
+            try {
+                String formulaExpression = variable.getLastFormulaExpression();
+                double value = (double) interpreter.parseExpression(formulaExpression);
+                if(!Double.isNaN(value)){
+                    Measurement measurement = new Measurement();
+                    measurement.setValue(value);
+                    measurement.setVariable(variable);
+                    measurements.add(measurement);
+                    measurement.setStartDate(Date.from(LAST_EXECTUTION.toInstant()));
+                    measurement.setEndDate(currentDate);
+                    results.put(variable.getNameVariable(), measurement);
+                }
+            } catch (Exception e) {
+                
+            }
         }
         measurementsService.saveMeasurements(measurements);
         LAST_EXECTUTION = now;
@@ -81,6 +86,7 @@ public class Executor {
         context.setValueForVar(Context.EVENTSQHSS, new ArrayList<Integer>());
         context.setValueForVar(Context.EVENTS_DONE, new HashMap<Integer, Integer>());
         context.updateLastEvent();
+        context.updateCotrollers();
     }
 
     // TODO: remove method and see expressionService.calculateVariables

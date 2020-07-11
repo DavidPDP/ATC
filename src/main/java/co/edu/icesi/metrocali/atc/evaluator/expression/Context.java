@@ -24,13 +24,11 @@ import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
-import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
-import co.edu.icesi.metrocali.atc.services.entities.SettingsService;
 import co.edu.icesi.metrocali.atc.services.notifications.events.EventStateChangeConcerner;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
@@ -82,15 +80,20 @@ public class Context implements EventStateChangeConcerner {
         loadPrioritiesAndThreshold();
         loadVariableDesc();
         loadEvents();
+        updateCotrollers();
     }
     private void loadEvents(){
         Setting interval = settings.retrieve(SettingKey.Recover_Time.name());
 		List<Event> eventsResult = Collections.emptyList();			
         eventsResult = events.retrieveAll(interval.getValue());
-        variables.put(LAST_EVENTS, eventsResult);
+        setValueForVar(LAST_EVENTS, eventsResult);
         updateLastEvent();
 					
     }
+    public void updateCotrollers(){
+        loadControllers(operators.retrieveOnlineControllers());
+    }
+
 
     private void loadVariableDesc() {
         variablesDesc.put(EVENTSQHSS,
@@ -112,7 +115,6 @@ public class Context implements EventStateChangeConcerner {
 
     public void fillVariables() {
         loadEventsDone();
-        loadControllers(operators.retrieveOnlineControllers());
         loadEventsController();
         Iterator<String> keys = variables.keySet().iterator();
         while (keys.hasNext()) {
@@ -193,7 +195,7 @@ public class Context implements EventStateChangeConcerner {
 
             }
         }
-        variables.put(EVENTS_DONE, eventsDone);
+        setValueForVar(EVENTS_DONE, eventsDone);
     }
 
     public void updateLastEvent() {
@@ -204,7 +206,7 @@ public class Context implements EventStateChangeConcerner {
                 events.add(event);
             }
         }
-        variables.put(LAST_EVENTS, events);
+        setValueForVar(LAST_EVENTS, events);
 
     }
 
@@ -233,7 +235,7 @@ public class Context implements EventStateChangeConcerner {
             elements.add(lastElement);
             eventsController.put(key, elements);
         }
-        variables.put(EVENTS_CONTROLLER, eventsController);
+        setValueForVar(EVENTS_CONTROLLER, eventsController);
     }
 
     public Functions getRootObject() {
@@ -287,18 +289,25 @@ public class Context implements EventStateChangeConcerner {
         List<Integer> eventsQHSs = (List<Integer>) variables.get(EVENTSQHSS);
         List<Integer> eventsQHSsDay = (List<Integer>) variables.get(EVENTSQHSS_Day);
         int lastSize=eventsQHSs.isEmpty()?0:eventsQHSs.get(eventsQHSs.size()-1);
-        if(notification.getType()==NotificationType.New_Event_Entity){
-            Event newEvent=(Event)notification.getElementsInvolved()[0];
-            lastEvent.add(newEvent);
-            lastSize++;
+        if(notification.getType()==NotificationType.New_Event_Entity||notification.getType()==NotificationType.New_Event_Assignment){
+            if(notification.getType()==NotificationType.New_Event_Assignment){
+                lastSize+=lastSize>0?-1:0;
+            }else{
+                Event newEvent=(Event)notification.getElementsInvolved()[0];
+                lastEvent.add(newEvent);
+                lastSize++;
+                setValueForVar(LAST_EVENTS,lastEvent);
+            }
+            eventsQHSs.add(lastSize);
+            eventsQHSsDay.add(lastSize);
+            setValueForVar(EVENTSQHSS, eventsQHSs);
+            setValueForVar(EVENTSQHSS_Day, eventsQHSsDay);
+        }else if(notification.getType()==NotificationType.New_Available_Controller){
+            Controller cont=(Controller)notification.getElementsInvolved()[0];
+            HashMap<String,Controller> controllers= (HashMap<String, Controller>) variables.get(CONTROLLERS);
+            controllers.put(cont.getId()+"", cont);
+            setValueForVar(CONTROLLERS, controllers);
         }
-        if(notification.getType()==NotificationType.New_Event_Assignment){
-            lastSize+=lastSize>0?-1:0;
-        }
-        eventsQHSs.add(lastSize);
-        eventsQHSsDay.add(lastSize);
-        setValueForVar(EVENTSQHSS, eventsQHSs);
-        setValueForVar(EVENTSQHSS_Day, eventsQHSsDay);
-        setValueForVar(LAST_EVENTS,lastEvent);
+        
     }
 }

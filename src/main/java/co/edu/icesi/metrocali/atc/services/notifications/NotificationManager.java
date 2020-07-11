@@ -109,7 +109,7 @@ public class NotificationManager
 		
 		if(notification.getAddressee().isPresent()) {
 			
-			String channelKey = notification.getAddressee() 
+			String channelKey = notification.getAddressee().get()
 				+ notification.getType().name(); 
 			
 			ExternalConcerner concerner = 
