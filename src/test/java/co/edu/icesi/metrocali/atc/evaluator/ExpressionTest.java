@@ -19,8 +19,6 @@ import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Context;
-import co.edu.icesi.metrocali.atc.repositories.evaluator.MeasurementsRepository;
-import co.edu.icesi.metrocali.atc.repositories.evaluator.VariableRepository;
 import co.edu.icesi.metrocali.atc.services.evaluator.ExpressionsService;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
@@ -29,12 +27,9 @@ import co.edu.icesi.metrocali.atc.vos.StateNotification;
 public class ExpressionTest {
     @Autowired
     private ExpressionsService expresion;
-    @Autowired
-    private VariableRepository variableRepository;
+    
     @Autowired
     private Context context;
-    @Autowired
-    private MeasurementsRepository measurementsRepository;
     
     @Before
     public void calculateKPIStage(){

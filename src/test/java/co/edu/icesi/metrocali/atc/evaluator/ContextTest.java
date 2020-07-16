@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -17,15 +18,21 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import co.edu.icesi.metrocali.atc.constants.SettingKey;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalEvent;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Context;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Functions;
 import co.edu.icesi.metrocali.atc.evaluator.expression.SpringExpressions;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
+import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
+import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
@@ -46,6 +53,18 @@ public class ContextTest {
     private CategoriesRepository categories;
     @Mock
     private OperatorsRepository operators;
+    @Mock
+    private SettingsRepository settings;
+    @Mock
+    private EventsRepository events;
+
+    @Before
+    public void before(){
+        Setting interval=new Setting();
+        interval.setValue("1 day");
+        when(settings.retrieve(SettingKey.Recover_Time.name())).thenReturn(interval);
+        when(events.retrieveAll(interval.getValue())).thenReturn(new ArrayList<>());
+    }
 
     private void queueIncreaseStage(){
         ObjectsToTest objectsToTest=ObjectsToTest.getInstance();
@@ -64,7 +83,12 @@ public class ContextTest {
     private void eventsDoneStage() {
         ObjectsToTest objectsToTest=ObjectsToTest.getInstance();
         context.loadSystemVariables();
-        context.setValueForVar(Context.LAST_EVENTS, objectsToTest.getEvents());
+        List<Event> events=objectsToTest.getEvents();
+        List<EvalEvent> evalEvents=new ArrayList<>();
+        for (Event event : events) {
+            evalEvents.add(new EvalEvent(event));
+        }
+        context.setValueForVar(Context.LAST_EVENTS, evalEvents);
     }
     private void fillVarStage(){
         ObjectsToTest objectsToTest=ObjectsToTest.getInstance();
@@ -107,8 +131,8 @@ public class ContextTest {
     public void updateEventsDoneTest(){
         eventsDoneStage();
         context.updateLastEvent();
-        List<Event> events= (List<Event>) context.getVar(Context.LAST_EVENTS);
-        for (Event event : events) {
+        List<EvalEvent> events= (List<EvalEvent>) context.getVar(Context.LAST_EVENTS);
+        for (EvalEvent event : events) {
             long id=event.getId();
             if(id==2||id==7){
                 fail();
@@ -119,14 +143,14 @@ public class ContextTest {
     public void fillVarTest(){
         ObjectsToTest objectsToTest=ObjectsToTest.getInstance();
         fillVarStage();
-        context.getRootObject();
+        context.fillVariables();
         ArrayList<Integer> eventsQss= (ArrayList<Integer>) context.getVar(Context.EVENTSQHSS);
         ArrayList<Integer> eventsQssDay= (ArrayList<Integer>) context.getVar(Context.EVENTSQHSS_Day);
-        ArrayList<Event> lastEvents= (ArrayList<Event>) context.getVar(Context.LAST_EVENTS);
+        ArrayList<EvalEvent> lastEvents= (ArrayList<EvalEvent>) context.getVar(Context.LAST_EVENTS);
         HashMap<Integer, Integer> eventsDone= (HashMap<Integer, Integer>) context.getVar(Context.EVENTS_DONE);
         HashMap<Integer, List<Integer>> eventsController= (HashMap<Integer, List<Integer>>) context.getVar(Context.EVENTS_CONTROLLER);
-        HashMap<String, Controller> controllers= (HashMap<String, Controller>) context.getVar(Context.CONTROLLERS);
-        HashSet<Integer> priorities = (HashSet<Integer>) context.getVar(context.PRIORITIES);
+        HashMap<String, EvalController> controllers= (HashMap<String, EvalController>) context.getVar(Context.CONTROLLERS);
+        List<Integer> priorities = (List<Integer>) context.getVar(context.PRIORITIES);
         HashMap<Integer, Double> threshold = (HashMap<Integer, Double>) context.getVar(context.THRESHOLDS);
 
         int size=objectsToTest.getEvents().size();
