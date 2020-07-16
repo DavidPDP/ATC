@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Context;
@@ -42,7 +43,12 @@ public class ExpressionTest {
         for (StateNotification stateNotification : increase) {
             context.update(stateNotification);
         }
-        context.loadControllers(ObjectsToTest.getInstance().getUsers());
+        List<EvalController> evalControllers=new ArrayList<>();
+        List<Controller> controllers=ObjectsToTest.getInstance().getUsers();
+        for (Controller controller : controllers) {
+            evalControllers.add(new EvalController(controller));
+        }
+        context.loadControllers(evalControllers);
         context.fillVariables();
         
     }
@@ -59,7 +65,7 @@ public class ExpressionTest {
 
     @Test
     public void addVariableTest(){
-        expresion.calculateKPI();
+        
     }
     @Test
     public void lqTest(){
@@ -164,8 +170,12 @@ public class ExpressionTest {
     }
     @Test
     public void ucTest(){
+        List<EvalController> evalControllers=new ArrayList<>();
         List<Controller> controllers=ObjectsToTest.getInstance().getUsers();
-        context.loadControllers(controllers);
+        for (Controller controller : controllers) {
+            evalControllers.add(new EvalController(controller));
+        }
+        context.loadControllers(evalControllers);
         HashMap<Integer,Double> answers=new HashMap<>();
         answers.put(1, 0.0);
         answers.put(2, 1.0);

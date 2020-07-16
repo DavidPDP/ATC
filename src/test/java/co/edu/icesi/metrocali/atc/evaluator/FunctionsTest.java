@@ -2,6 +2,7 @@ package co.edu.icesi.metrocali.atc.evaluator;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,14 +10,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalEvent;
+import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.evaluator.expression.Context;
 import co.edu.icesi.metrocali.atc.evaluator.expression.Functions;
 
 
@@ -25,7 +32,36 @@ import co.edu.icesi.metrocali.atc.evaluator.expression.Functions;
 public class FunctionsTest {
     @InjectMocks
     private Functions functions;
+    @Mock
+    private Context context;
 
+    public List<EvalEvent> parseEvent(List<Event> events){
+        List<EvalEvent> evalEvents=new ArrayList<>();
+        for (int i = 0; i < events.size(); i++) {
+            EvalEvent evalEvent=new EvalEvent(events.get(i));
+            evalEvents.add(evalEvent); 
+        }
+    
+        return evalEvents;
+    }
+    public List<EvalController> parseController(List<Controller> controllers){
+        List<EvalController> evalControllers=new ArrayList<>();
+        for (Controller controller : controllers) {
+            evalControllers.add(new EvalController(controller));
+        }
+        return evalControllers;
+    }
+    @Before
+    public void before(){
+        List<Category> categories=ObjectsToTest.getInstance().getSubCategories();
+        List<Integer> priorities=new ArrayList<>();
+        for (Category cat : categories) {
+            priorities.add(cat.getBasePriority());
+        }
+        HashMap<String,Object> var=new HashMap<>();
+        when(context.getVariables()).thenReturn(var);
+        when(context.getVar(Context.PRIORITIES)).thenReturn(priorities);
+    }
     @Test
     public void averageAndSumTest(){
         List<Double> numbers=new ArrayList<>();
@@ -44,25 +80,25 @@ public class FunctionsTest {
     public void timesInPendingStateTest(){
         ObjectsToTest objects=ObjectsToTest.getInstance();
         List<Event> events=objects.getEvents();
-        List<Double> inPending=functions.timesInPendingState(events);
+        List<Double> inPending=functions.timesInPendingState(parseEvent(events));
         double[] answers={3.0,2.0,1.0,1.0,2.0,2.0,2.0,2.0};
         for (int i = 0; i < answers.length-1; i++) {
-            assertTrue(inPending.get(i)==answers[i]);    
+            assertTrue(inPending.get(i)==answers[i],inPending.get(i)+"=="+answers[i]);    
         }
-        assertTrue(inPending.get(7)>=2);    
+        assertTrue(inPending.get(7)>=2,inPending.get(7)+">="+2);    
     }
     @Test
     public void timesInAssignedStateTest(){
         ObjectsToTest objects=ObjectsToTest.getInstance();
         List<Event> events=objects.getEvents();
-        List<Double> inAssigned=functions.timesInAssignedState(events);
+        List<Double> inAssigned=functions.timesInAssignedState(parseEvent(events));
         double[] answers={2.0,2.0,3.0,2.0,1.0,5.0,1.0,0};
         for (int i = 0; i < answers.length-1; i++) {
             if(i!=5){
-                assertTrue(inAssigned.get(i)==answers[i]);    
+                assertTrue(inAssigned.get(i)==answers[i],inAssigned.get(i)+"=="+answers[i]);    
             }
         }
-        assertTrue(inAssigned.get(5)>=5); 
+        assertTrue(inAssigned.get(5)>=5,inAssigned.get(5)+">="+5); 
     }
 
     @Test
@@ -81,7 +117,7 @@ public class FunctionsTest {
     public void inProcessTimeTest(){
         ObjectsToTest objects=ObjectsToTest.getInstance();
         List<Event> events=objects.getEvents();
-        List<Double> inProcess=functions.inProcessTime(events);
+        List<Double> inProcess=functions.inProcessTime(parseEvent(events));
         assertTrue(inProcess.get(0)>=2);
         assertTrue(inProcess.get(1)==4);
         assertTrue(inProcess.get(2)>=2);
@@ -96,7 +132,7 @@ public class FunctionsTest {
     public void inHoldTest(){
         ObjectsToTest objects=ObjectsToTest.getInstance();
         List<Event> events=objects.getEvents();
-        List<Double> inHold=functions.inHold(events);
+        List<Double> inHold=functions.inHold(parseEvent(events));
         for (int i = 0; i < inHold.size(); i++) {
             if(i!=4){
                 assertTrue(inHold.get(i)==0);
@@ -128,15 +164,15 @@ public class FunctionsTest {
         tmp.add(events.get(4));
         answer.put(960, tmp);//3
 
-        HashMap<Integer, List<Event>> response=functions.groupByPriority(events);
+        HashMap<Integer, List<EvalEvent>> response=functions.groupByPriority(parseEvent(events));
         Iterator<Integer> keys=response.keySet().iterator();
         while(keys.hasNext()){
             int key=keys.next();
             List<Event> eventsRight=answer.get(key);
-            List<Event> eventsTest=response.get(key);
+            List<EvalEvent> eventsTest=response.get(key);
             assertNotNull("right "+key,eventsRight);
             assertNotNull("test "+key,eventsTest);
-            for (Event event : eventsTest) {
+            for (EvalEvent event : eventsTest) {
                 boolean exist=false;
                 for (Event event2 : eventsRight) {
                     exist|=event.getId()==event2.getId();
@@ -160,7 +196,7 @@ public class FunctionsTest {
         List<Controller> users=ObjectsToTest.getInstance().getUsers();
         List<Double> busyTimes=new ArrayList<>();
         for (int i = 0; i < users.size(); i++) {
-            double busyTime=functions.busyTime(users.get(i));
+            double busyTime=functions.busyTime(new EvalController(users.get(i)));
             busyTimes.add(busyTime);
         }
         assertTrue(busyTimes.get(0)==5);
@@ -208,12 +244,14 @@ public class FunctionsTest {
     @Test
     public void sortETest(){
         List<Event> events=ObjectsToTest.getInstance().getEvents();
-        Event tmp=events.get(0);
-        events.set(0, events.get(5));
-        events.set(5, events.get(1));
-        events.set(1, events.get(4));
-        events.set(4, tmp);
-        List<Event> orden=functions.sortE(events);
+        List<Event> eventsTmp=new ArrayList<>();
+        events.forEach(e->eventsTmp.add(e));
+        Event tmp=eventsTmp.get(0);
+        eventsTmp.set(0, eventsTmp.get(5));
+        eventsTmp.set(5, eventsTmp.get(1));
+        eventsTmp.set(1, eventsTmp.get(4));
+        eventsTmp.set(4, tmp);
+        List<EvalEvent> orden=functions.sortE(parseEvent(eventsTmp));
         for (int i = 1; i < orden.size(); i++) {
             assertTrue(orden.get(i-1).getId()<=orden.get(i).getId());
         }
@@ -224,7 +262,7 @@ public class FunctionsTest {
         List<Controller> users=ObjectsToTest.getInstance().getUsers();
         List<Double> stayTimes=new ArrayList<>();
         for (int i = 0; i < users.size(); i++) {
-            double stayTime=functions.controllerStay(users.get(i));
+            double stayTime=functions.controllerStay(new EvalController(users.get(i)));
             stayTimes.add(stayTime);
         }
         assertTrue(stayTimes.get(0)>=10);

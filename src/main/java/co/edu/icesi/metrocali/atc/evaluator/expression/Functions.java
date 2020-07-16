@@ -13,10 +13,10 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
-import co.edu.icesi.metrocali.atc.entities.events.Event;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalEvent;
 import co.edu.icesi.metrocali.atc.entities.events.EventTrack;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
-import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.evaluator.expression.EvalFunction.Info;
 
 @Service
@@ -47,9 +47,9 @@ public class Functions {
 
     @EvalFunction(
             description = "Lista de los tiempos en los que ha estado cada evento, en la lista del parámetro, en estado pendiente. En esta función se filtran los estados en pendiente y se suman todas las diferencias entre el tiempo final y de inicio de cada uno. Esta función hace uso del atributo de timestamp que tiene la entidad evento (revisar modelo de datos).")
-    public List<Double> timesInPendingState(List<Event> events) {
+    public List<Double> timesInPendingState(List<EvalEvent> events) {
         List<Double> ret = new ArrayList<>();
-        for (Event event : events) {
+        for (EvalEvent event : events) {
             List<EventTrack> eventTracks = event.getEventsTracks();
 
             double time = 0;
@@ -73,9 +73,9 @@ public class Functions {
 
     @EvalFunction(
             description = "Lista de los tiempos los que ha estado cada evento, en la lista del parámetro, en estado asignado. En esta función se filtran los estados “en asignado” y se suman todas las diferencias entre el tiempo final y de inicio de cada uno. Esta función hace uso del atributo de timestamp que tiene la entidad evento (revisar modelo de datos)")
-    public List<Double> timesInAssignedState(List<Event> events) {
+    public List<Double> timesInAssignedState(List<EvalEvent> events) {
         List<Double> ret = new ArrayList<>();
-        for (Event event : events) {
+        for (EvalEvent event : events) {
             List<EventTrack> eventTracks = event.getEventsTracks();
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
@@ -119,9 +119,9 @@ public class Functions {
 
     @EvalFunction(
             description = "lista de tiempos en que ha estado cada evento en el estado “en proceso”, teniendo en cuenta los timestamp de los event_state en la lista del parámetro.")
-    public List<Double> inProcessTime(List<Event> events) {
+    public List<Double> inProcessTime(List<EvalEvent> events) {
         List<Double> ret = new ArrayList<>();
-        for (Event event : events) {
+        for (EvalEvent event : events) {
             List<EventTrack> eventTracks = event.getEventsTracks();
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
@@ -143,9 +143,9 @@ public class Functions {
 
     @EvalFunction(
             description = "lista de tiempos en que ha estado cada evento en el estado “en espera”, en la lista del parámetro.")
-    public List<Double> inHold(List<Event> events) {
+    public List<Double> inHold(List<EvalEvent> events) {
         List<Double> ret = new ArrayList<>();
-        for (Event event : events) {
+        for (EvalEvent event : events) {
             List<EventTrack> eventTracks = event.getEventsTracks();
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
@@ -167,9 +167,9 @@ public class Functions {
 
     @EvalFunction(
             description = "Lista de los tiempos de estancia de cada evento en la lista parámetro.")
-    public List<Double> lenghtOfStay(List<Event> events) {
+    public List<Double> lenghtOfStay(List<EvalEvent> events) {
         List<Double> ret = new ArrayList<>();
-        for (Event event : events) {
+        for (EvalEvent event : events) {
             List<EventTrack> eventTracks = event.getEventsTracks();
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
@@ -199,19 +199,19 @@ public class Functions {
 
     @EvalFunction(
             description = "eventos agrupados por prioridad en una hashMap (priority,List<Event>)")
-    public HashMap<Integer, List<Event>> groupByPriority(List<Event> events) {
-        HashMap<Integer, List<Event>> groupsByPriority = new HashMap<>();
+    public HashMap<Integer, List<EvalEvent>> groupByPriority(List<EvalEvent> events) {
+        HashMap<Integer, List<EvalEvent>> groupsByPriority = new HashMap<>();
         List<Integer> priorities= (List<Integer>) context.getVar(Context.PRIORITIES);
         for (Integer integer : priorities) {
-            groupsByPriority.put(integer, new ArrayList<Event>());
+            groupsByPriority.put(integer, new ArrayList<EvalEvent>());
         }
-        for (Event event : events) {
+        for (EvalEvent event : events) {
 
             int priority = event.getCategory().getBasePriority();
             if (!groupsByPriority.containsKey(priority)) {
-                groupsByPriority.put(priority, new ArrayList<Event>());
+                groupsByPriority.put(priority, new ArrayList<EvalEvent>());
             }
-            List<Event> value = groupsByPriority.get(priority);
+            List<EvalEvent> value = groupsByPriority.get(priority);
             value.add(event);
             groupsByPriority.put(priority, value);
         }
@@ -241,7 +241,7 @@ public class Functions {
 
     @EvalFunction(
             description = "suma de los tiempos de todos los estados en ocupado del controlador.")
-    public double busyTime(Controller controller) {
+    public double busyTime(EvalController controller) {
         double busyTime = 0;
         
         List<UserTrack> userTracks = controller.getUserTracks();
@@ -309,14 +309,14 @@ public class Functions {
 
     @EvalFunction(
             description = "lista con los mismos eventos pero en orden ascendente por el identificador de cada evento.")
-    public List<Event> sortE(List<Event> events) {
+    public List<EvalEvent> sortE(List<EvalEvent> events) {
         if (events.isEmpty()) {
             return new ArrayList<>();
         }
-        events.sort(new Comparator<Event>() {
+        events.sort(new Comparator<EvalEvent>() {
 
             @Override
-            public int compare(Event o1, Event o2) {
+            public int compare(EvalEvent o1, EvalEvent o2) {
                 return Long.compare(o1.getId(), o2.getId());
             }
         });
@@ -328,7 +328,7 @@ public class Functions {
     @EvalFunction(
             description = "Retorna el tiempo de estancia, suma de todas las diferencias de tiempo de los estados en los que ha estado el controlador pasado como parámetro.")
     @Info(key = "examples", value = "controllerStay(#controllers[0])")
-    public double controllerStay(Controller controller) {
+    public double controllerStay(EvalController controller) {
         double stayTime = 0;
         List<UserTrack> userTracks = controller.getUserTracks();
         for (UserTrack userTrack : userTracks) {

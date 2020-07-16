@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import co.edu.icesi.metrocali.atc.constants.NotificationType;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalController;
+import co.edu.icesi.metrocali.atc.entities.evaluator.EvalEvent;
 import co.edu.icesi.metrocali.atc.entities.evaluator.EvalParameter;
 import co.edu.icesi.metrocali.atc.entities.events.Category;
 import co.edu.icesi.metrocali.atc.entities.events.Event;
@@ -73,10 +75,10 @@ public class Context implements EventStateChangeConcerner {
         variablesDesc = new HashMap<>();
         addVar(EVENTSQHSS, new ArrayList<Integer>(), "");
         addVar(EVENTSQHSS_Day, new ArrayList<Integer>(), "");
-        addVar(LAST_EVENTS, new ArrayList<Event>(), "");
+        addVar(LAST_EVENTS, new ArrayList<EvalEvent>(), "");
         addVar(EVENTS_DONE, new HashMap<Integer, Integer>(), "");
         addVar(EVENTS_CONTROLLER, new HashMap<Integer, List<Integer>>(), "");
-        addVar(CONTROLLERS, new HashMap<String, Controller>(), "");
+        addVar(CONTROLLERS, new HashMap<String, EvalController>(), "");
         loadPrioritiesAndThreshold();
         loadVariableDesc();
         loadEvents();
@@ -84,14 +86,22 @@ public class Context implements EventStateChangeConcerner {
     }
     private void loadEvents(){
         Setting interval = settings.retrieve(SettingKey.Recover_Time.name());
-		List<Event> eventsResult = Collections.emptyList();			
-        eventsResult = events.retrieveAll(interval.getValue());
+        List<EvalEvent> eventsResult = new ArrayList<>();
+        List<Event> eventsAviom= events.retrieveAll(interval.getValue());
+        for (Event event : eventsAviom) {
+            eventsResult.add(new EvalEvent(event));
+        }        
         setValueForVar(LAST_EVENTS, eventsResult);
         updateLastEvent();
 					
     }
     public void updateCotrollers(){
-        loadControllers(operators.retrieveOnlineControllers());
+        List<Controller> controllers=operators.retrieveOnlineControllers();
+        List<EvalController> evalControllers=new ArrayList<>();
+        for (Controller controller : controllers) {
+            evalControllers.add(new EvalController(controller));
+        }
+        loadControllers(evalControllers);
     }
 
 
@@ -123,7 +133,7 @@ public class Context implements EventStateChangeConcerner {
         }
     }
 
-    public void loadControllers(List<Controller> controllers) {
+    public void loadControllers(List<EvalController> controllers) {
         if(controllers.isEmpty()){
             return;
         }
@@ -131,8 +141,8 @@ public class Context implements EventStateChangeConcerner {
         HashMap<Integer, List<Integer>> eventsController = (HashMap<Integer, List<Integer>>) variables.get(EVENTS_CONTROLLER);
         HashMap<Integer, Integer> eventsDoneB=new HashMap<>();
         HashMap<Integer, List<Integer>> eventsControllerB=new HashMap<>();
-        HashMap<String, Controller> cMap = new HashMap<String, Controller>();
-        for (Controller user : controllers) {
+        HashMap<String, EvalController> cMap = new HashMap<String, EvalController>();
+        for (EvalController user : controllers) {
             cMap.put(user.getId() + "", user);
             if(eventsDone.containsKey(user.getId())){
                 eventsDoneB.put(user.getId(), eventsDone.get(user.getId()));
@@ -174,8 +184,8 @@ public class Context implements EventStateChangeConcerner {
 
     private void loadEventsDone() {
         HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
-        List<Event> lEvents = (List<Event>) variables.get(LAST_EVENTS);
-        for (Event event : lEvents) {
+        List<EvalEvent> lEvents = (List<EvalEvent>) variables.get(LAST_EVENTS);
+        for (EvalEvent event : lEvents) {
             if (isEventDone(event)) {
                 List<EventTrack> tracks = event.getEventsTracks();
                 int idController = -1;
@@ -199,9 +209,9 @@ public class Context implements EventStateChangeConcerner {
     }
 
     public void updateLastEvent() {
-        List<Event> lEvents = (List<Event>) variables.get(LAST_EVENTS);
-        List<Event> events = new ArrayList<>();
-        for (Event event : lEvents) {
+        List<EvalEvent> lEvents = (List<EvalEvent>) variables.get(LAST_EVENTS);
+        List<EvalEvent> events = new ArrayList<>();
+        for (EvalEvent event : lEvents) {
             if (!isEventDone(event)) {
                 events.add(event);
             }
@@ -210,7 +220,7 @@ public class Context implements EventStateChangeConcerner {
 
     }
 
-    private boolean isEventDone(Event event) {
+    private boolean isEventDone(EvalEvent event) {
         State lastState = event.getLastEventTrack().getState();
         boolean ret = lastState.getName().equals(StateValue.Verification.name());
         ret |= lastState.getName().equals(StateValue.Archived.name());
@@ -220,8 +230,8 @@ public class Context implements EventStateChangeConcerner {
     private void loadEventsController() {
         HashMap<Integer, Integer> eventsDone = (HashMap<Integer, Integer>) variables.get(EVENTS_DONE);
         HashMap<Integer, List<Integer>> eventsController = (HashMap<Integer, List<Integer>>) variables.get(EVENTS_CONTROLLER);
-        HashMap<String, Controller> controllers= (HashMap<String, Controller>) variables.get(CONTROLLERS);
-        Iterator<Controller> values=controllers.values().iterator();
+        HashMap<String, EvalController> controllers= (HashMap<String, EvalController>) variables.get(CONTROLLERS);
+        Iterator<EvalController> values=controllers.values().iterator();
         while(values.hasNext()){
             int key = values.next().getId();
             Integer lastElement = eventsDone.get(key);
@@ -285,7 +295,7 @@ public class Context implements EventStateChangeConcerner {
 
     @Override
     public void update(StateNotification notification) {
-        List<Event> lastEvent=(List<Event>) variables.get(LAST_EVENTS);
+        List<EvalEvent> lastEvent=(List<EvalEvent>) variables.get(LAST_EVENTS);
         List<Integer> eventsQHSs = (List<Integer>) variables.get(EVENTSQHSS);
         List<Integer> eventsQHSsDay = (List<Integer>) variables.get(EVENTSQHSS_Day);
         int lastSize=eventsQHSs.isEmpty()?0:eventsQHSs.get(eventsQHSs.size()-1);
@@ -294,7 +304,7 @@ public class Context implements EventStateChangeConcerner {
                 lastSize+=lastSize>0?-1:0;
             }else{
                 Event newEvent=(Event)notification.getElementsInvolved()[0];
-                lastEvent.add(newEvent);
+                lastEvent.add(new EvalEvent(newEvent));
                 lastSize++;
                 setValueForVar(LAST_EVENTS,lastEvent);
             }
@@ -304,8 +314,8 @@ public class Context implements EventStateChangeConcerner {
             setValueForVar(EVENTSQHSS_Day, eventsQHSsDay);
         }else if(notification.getType()==NotificationType.New_Available_Controller){
             Controller cont=(Controller)notification.getElementsInvolved()[0];
-            HashMap<String,Controller> controllers= (HashMap<String, Controller>) variables.get(CONTROLLERS);
-            controllers.put(cont.getId()+"", cont);
+            HashMap<String,EvalController> controllers= (HashMap<String, EvalController>) variables.get(CONTROLLERS);
+            controllers.put(cont.getId()+"", new EvalController(cont));
             setValueForVar(CONTROLLERS, controllers);
         }
         
