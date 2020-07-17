@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,10 +15,11 @@ public class UserTrack {
 	//Constructors ---------------------------------
 	public UserTrack() {}
 	
-	public UserTrack(User user, State state) {
+	public UserTrack(User user, State state, Role role) {
 		
 		this.user = user;
 		this.state = state;
+		this.role = role;
 		
 	}
 	//----------------------------------------------
@@ -32,6 +34,8 @@ public class UserTrack {
 	private User user;
 	
 	private State state;
+	
+	private Role role;
 	//----------------------------------------------
 
 	//Aggregates -----------------------------------

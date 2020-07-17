@@ -25,13 +25,17 @@ public class RecoveryManager {
 		
 		sortByRecoveryPrecedence(recoveryServices);
 		
-		for (RecoveryService rs : recoveryServices) {
+		for (RecoveryPoint rp : recoveryPoints) {
 			
-			for (RecoveryPoint rp : recoveryPoints) {
+			rp.preRecovery();
+			
+			for (RecoveryService rs : recoveryServices) {
 				rp.recovery(rs.getType(), rs.recoveryEntities());
 			}
 			
-		}	
+			rp.postRecovery();
+			
+		}
 		
 	}
 	

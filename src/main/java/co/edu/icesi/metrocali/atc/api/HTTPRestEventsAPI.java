@@ -159,7 +159,7 @@ public class HTTPRestEventsAPI {
 			@PathVariable String eventCode,
 			@RequestBody EventRemark remark) {
 
-		eventService.sendBack(authorName, eventCode, remark);
+		eventService.sendBack(eventCode, authorName, remark);
 		return ResponseEntity.ok().build();
 
 	}

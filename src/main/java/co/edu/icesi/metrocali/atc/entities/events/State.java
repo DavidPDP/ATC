@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
 import lombok.Getter;
@@ -27,7 +28,7 @@ public class State implements Recoverable{
 	}
 	
 	//Aggregates -----------------------------------
-	@JsonIgnore
+	@JsonIgnoreProperties("nextStates")
 	private List<State> nextStates = new ArrayList<>();
 	//----------------------------------------------
 	

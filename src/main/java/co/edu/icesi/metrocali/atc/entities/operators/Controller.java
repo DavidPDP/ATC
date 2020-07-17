@@ -14,9 +14,9 @@ public class Controller extends User implements Comparable<Controller>{
 	
 	private static final long serialVersionUID = -6288917867363076425L;
 
+	@JsonIgnore
 	private Event lastEvent;
 	
-	@JsonIgnore
 	private Integer workLoad = 0;
 	
 	public void increaseWorkLoad(int newWorkLoad) {

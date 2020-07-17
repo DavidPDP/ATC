@@ -7,9 +7,13 @@ package co.edu.icesi.metrocali.atc.constants;
  */
 public enum StateValue {
 	
-	Pending, Assigned, In_Proccess, On_Hold,
-	Verification, Archived,
+	//Event's states ---------------------------------
+	Pending, Approbing, Processing, Waiting, Verifying,
 	
+	//Virtual states for ATC -------------------------
+	Rejected, Approved, Completed, Returned, Resolved,
+	
+	//Operator's states ------------------------------
 	Available, Busy, Unavailable, Offline
 	
 }

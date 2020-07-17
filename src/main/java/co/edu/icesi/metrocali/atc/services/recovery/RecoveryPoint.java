@@ -14,6 +14,14 @@ import java.util.List;
 public interface RecoveryPoint {
 
 	/**
+	 * Is used as a callback notification to signal that 
+	 * recovery process in this recovery point started. 
+	 * Implement this to perform pre-recovery or any initialization 
+	 * processing of the recovery point.
+	 */
+	public void preRecovery();
+	
+	/**
 	 * Concrete implementation of the recovery using the 
 	 * latest system state. The last state is represented 
 	 * by a list of recoverable entities, which are passed 
@@ -25,5 +33,13 @@ public interface RecoveryPoint {
 	public <T extends Recoverable> void recovery(Class<T> type, 
 			List<Recoverable> entities
 	);
+	
+	/**
+	 * Is used as a callback notification to signal that 
+	 * recovery process in this recovery point finished. 
+	 * Implement this to perform post-recovery or any initialization 
+	 * processing of the recovery point.
+	 */
+	public void postRecovery();
 	
 }
