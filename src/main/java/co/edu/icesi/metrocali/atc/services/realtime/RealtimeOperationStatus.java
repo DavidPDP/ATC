@@ -20,18 +20,16 @@ public interface RealtimeOperationStatus {
 	public <T extends Recoverable> void store(
 		Class<T> type, List<T> entities);
 	
-	public <T extends Recoverable, V extends Recoverable> 
-		void storeToList(Class<T> keyType, T keyEntity, 
-				Class<V> valueType, V valueEntity);
-	
 	public <T extends Recoverable> List<T> 
 		retrieveAll(Class<T> type);
 	
 	public <T extends Recoverable> Optional<T> retrieve(
 		Class<T> type, String entityKey);
 	
-	public <T extends Recoverable> T remove(
+	public <T extends Recoverable> Optional<T> remove(
 		Class<T> type, String entityKey);
+	
+	public <T extends Recoverable> void clear(Class<T> type);
 	
 	public <T extends Recoverable> List<T> filter(
 		Class<T> type, String ... filtersValue);

@@ -14,14 +14,16 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import co.edu.icesi.metrocali.atc.constants.RecoveryPrecedence;
 import co.edu.icesi.metrocali.atc.constants.SettingKey;
 import co.edu.icesi.metrocali.atc.constants.StateValue;
 import co.edu.icesi.metrocali.atc.constants.UserType;
-import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.operators.ControllerWorkState;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
+import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.exceptions.ATCRuntimeException;
@@ -31,6 +33,8 @@ import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.services.planning.ResourcePlanning;
 import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
+import co.edu.icesi.metrocali.atc.services.recovery.Recoverable;
+import co.edu.icesi.metrocali.atc.services.recovery.RecoveryService;
 
 /**
  * Manages the services of the operators. This includes 
@@ -45,34 +49,55 @@ import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
  * 
  */
 @Service
-public class OperatorsService implements UserDetailsService{
+public class OperatorsService implements UserDetailsService, RecoveryService {
 	
 	private RealtimeOperationStatus realtimeOpStatus;
 	
 	private OperatorsRepository operatorsRepository;
 	
-	private StatesService statesService;
-	
-	private SettingsService settingService;
-	
 	private ResourcePlanning resourcePlanning;
 	
 	private BCryptPasswordEncoder bcryptEncoder;
 	
+	private StatesService statesService;
+	
+	private SettingsService settingService;
+	
+	private RolesService rolesService;
+	
+	private ControllerWorkStateService controllerWorkStateService;
+	
 	public OperatorsService(
 			RealtimeOperationStatus realtimeOpStatus,
 			OperatorsRepository operatorsRepository,
-			StatesService statesService,
-			SettingsService settingService,
 			ResourcePlanning resourcePlanning,
-			BCryptPasswordEncoder bcryptEncoder) {
+			BCryptPasswordEncoder bcryptEncoder,
+			EntityServiceLookUp entityServiceLookUp) {
 		
 		this.realtimeOpStatus = realtimeOpStatus;
 		this.operatorsRepository = operatorsRepository;
-		this.statesService = statesService;
-		this.settingService = settingService;
 		this.resourcePlanning = resourcePlanning;
 		this.bcryptEncoder = bcryptEncoder;
+		
+		this.statesService = 
+			entityServiceLookUp.getEntityService(
+				StatesService.class
+			);
+		
+		this.settingService = 
+			entityServiceLookUp.getEntityService(
+				SettingsService.class
+			);
+		
+		this.rolesService = 
+			entityServiceLookUp.getEntityService(
+				RolesService.class
+			);	
+		
+		this.controllerWorkStateService =
+			entityServiceLookUp.getEntityService(
+				ControllerWorkStateService.class
+			);
 		
 	}
 	
@@ -89,6 +114,21 @@ public class OperatorsService implements UserDetailsService{
 		
 	}
 	
+	@Override
+	public Class<? extends Recoverable> getType() {
+		return User.class;
+	}
+
+	@Override
+	public RecoveryPrecedence getRecoveryPrecedence() {
+		return RecoveryPrecedence.Second;
+	}
+
+	@Override
+	public List<Recoverable> recoveryEntities() {
+		return new ArrayList<Recoverable>(operatorsRepository.retrieveOnline());
+	}
+	
 	//Init operators in the system ---------------------
 	public void registerOperator(String accountName, 
 			UserType type) {
@@ -100,7 +140,7 @@ public class OperatorsService implements UserDetailsService{
 		//Instantiate concrete user
 		if(operator.isPresent()) {
 				
-			initUserTracks(operator.get());
+			initUserTracks(operator.get(), type);
 			
 			if(UserType.Controller.equals(type)) {
 				
@@ -108,7 +148,21 @@ public class OperatorsService implements UserDetailsService{
 				controller.fillUserData(operator.get());
 				
 				realtimeOpStatus.store(Controller.class, controller);
+				
+				try {
+					controllerWorkStateService.retrieve(accountName);
+				}catch (ResourceNotFound e) {
+					
+					ControllerWorkState workState = 
+						new ControllerWorkState(accountName);
+					
+					realtimeOpStatus.store(
+						ControllerWorkState.class, workState);
+					
+				}
+				
 				resourcePlanning.addAvailableController(controller);
+				
 				
 			}else if(UserType.Omega.equals(type)) {
 				
@@ -132,13 +186,14 @@ public class OperatorsService implements UserDetailsService{
 		
 	}
 	
-	private void initUserTracks(User user) {
+	private void initUserTracks(User user, UserType userType) {
 		
 		List<UserTrack> tracksToPersist = new ArrayList<>();
 		
 		//Creates new trace
 		State state = statesService.retrieve(StateValue.Available);
-		UserTrack newTrack = new UserTrack(user, state);
+		Role role = rolesService.retrieve(userType);
+		UserTrack newTrack = new UserTrack(user, state, role);
 		
 		//Retrieves last tracks
 		List<UserTrack> lastTracks = history(user.getAccountName());
@@ -193,13 +248,18 @@ public class OperatorsService implements UserDetailsService{
 		
 		//Verify next state is valid
 		State currentState = user.getLastUserTrack().getState();
-		statesService.verifyNextState(currentState, nextState);
 		
-		//Creates trace
-		createTrack(user, nextState);
-		
-		//Updates operation status
-		resolveUpdate(userType, user);
+		if(!currentState.getName().equals(nextState.name())) {
+			
+			statesService.verifyNextState(currentState, nextState);
+			
+			//Creates trace
+			createTrack(user, nextState);
+			
+			//Updates operation status
+			resolveUpdate(userType, user);
+			
+		}
 		
 	}
 	
@@ -216,7 +276,10 @@ public class OperatorsService implements UserDetailsService{
 		
 		//Creates new trace
 		State state = statesService.retrieve(userState);
-		UserTrack newUsertrack = new UserTrack(user, state);
+		Role role = rolesService.retrieve(
+			UserType.valueOf(lastUserTrack.getRole().getName())
+		);
+		UserTrack newUsertrack = new UserTrack(user, state, role);
 		
 		tracksToPersist.add(newUsertrack);
 		
@@ -282,7 +345,7 @@ public class OperatorsService implements UserDetailsService{
 	
 	
 	public User retrieveOperator(String accountName, 
-			UserType type) {
+		UserType type) {
 		
 		if(type.equals(UserType.Controller)) {
 			return retrieveController(accountName);
@@ -296,19 +359,9 @@ public class OperatorsService implements UserDetailsService{
 	
 	public boolean isAvailable(Controller controller) {
 		
-		boolean isAvailable = false;
-		
-		List<Event> inProcessEvents = 
-			realtimeOpStatus.filter(Event.class,
-				"lastUser=" + controller.getAccountName(),	
-				"lastState=" + StateValue.In_Proccess.name()
-			);
-		
-		if(inProcessEvents.isEmpty()) {
-			isAvailable = true;
-		}
-		
-		return isAvailable;
+		return controllerWorkStateService.hasEventsInProcess(
+			controller.getAccountName()
+		);
 		
 	}
 	
@@ -339,32 +392,21 @@ public class OperatorsService implements UserDetailsService{
 	 */
 	private Omega retrieveOmega(String accountName) {
 		
-		Optional<Omega> omega = 
+		Omega omega = null;
+		
+		Optional<Omega> shallowOmega = 
 			realtimeOpStatus.retrieve(Omega.class, accountName);
 		
-		if(omega.isPresent()) {
-			//Shallow strategy
-			return omega.get();
+		if(shallowOmega.isPresent()) {
+			//Shallow load
+			omega = shallowOmega.get();
 		}else {
-			return null;
-			//omega = operatorsRepository.retrieveOperator(accountName);
+			//Deep load
+			omega = (Omega) operatorsRepository.retrieve(accountName);
 		}
 		
-//		Optional<Omega> omega = realtimeOpStatus.retrieveOmega(accountName);
-//		if(omega.isPresent()) {
-//			// shallow strategy
-//			return omega.get();
-//		}else {
-//			// deep strategy
-//			omega = operatorsRepository.retrieveOmega(accountName);
-//			if(omega.isPresent()) {
-//				realtimeOpStatus.addOrUpdateController(omega.get());
-//				return omega.get();
-//			}else {
-//				throw new NoSuchElementException();
-//			}
-//		}
-	//	return null;
+		return omega;
+	
 	}
 	
 	
@@ -392,10 +434,6 @@ public class OperatorsService implements UserDetailsService{
 			}
 			
 		}
-	}
-	
-	public List<Controller> retrieveOnlineControllers(){
-		return operatorsRepository.retrieveOnlineControllers();
 	}
 	
 	public List<Controller> retrieveOOControllers() {

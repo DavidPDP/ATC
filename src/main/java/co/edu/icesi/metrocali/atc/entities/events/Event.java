@@ -50,6 +50,7 @@ public class Event implements Comparable<Event>, Recoverable{
 	
 	//Interface implementation ---------------------
 	@Override
+	@JsonIgnore
 	public String getKeyEntity() {
 		return this.code;
 	}
@@ -83,11 +84,13 @@ public class Event implements Comparable<Event>, Recoverable{
 	}
 	
 	@Override
+	@JsonIgnore
 	public int compareTo(Event o) {
 		return this.getLastPriority() - o.getLastPriority();
 	}
 	
 	@Override
+	@JsonIgnore
 	public String toString() {
 		
 		StringBuilder format = new StringBuilder();

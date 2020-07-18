@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.policies.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +14,7 @@ public class EventTrack {
 	//Constructors ---------------------------------
 	public EventTrack() {}
 	
-	public EventTrack(Integer priority, Controller user,
+	public EventTrack(Integer priority, User user,
 			State state) {
 		
 		this.priority = priority;
@@ -35,7 +35,7 @@ public class EventTrack {
 
 	private Integer priority;
 	
-	private Controller user;
+	private User user;
 	
 	private State state;
 	//----------------------------------------------

@@ -17,6 +17,7 @@ import co.edu.icesi.metrocali.atc.entities.events.Event;
 import co.edu.icesi.metrocali.atc.entities.events.State;
 import co.edu.icesi.metrocali.atc.entities.events.Step;
 import co.edu.icesi.metrocali.atc.entities.operators.Controller;
+import co.edu.icesi.metrocali.atc.entities.operators.ControllerWorkState;
 import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.Role;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
@@ -52,7 +53,7 @@ public class LocalRealtimeOperationStatus
 	//---------------------------------------
 		
 	//Events --------------------------------
-	private Map<String, List<Event>> controllersEvents; 
+	private Map<String, ControllerWorkState> controllersEvents; 
 	
 	private Map<String,Event> events;
 	//---------------------------------------
@@ -92,6 +93,11 @@ public class LocalRealtimeOperationStatus
 	
 	//Recover Method --------------------------------
 	@Override
+	public void preRecovery() {
+		//there are no previous settings.
+	}
+
+	@Override
 	public <T extends Recoverable> void recovery(
 			Class<T> type, List<Recoverable> entities) {
 		
@@ -110,8 +116,22 @@ public class LocalRealtimeOperationStatus
 		}
 		
 	}
+	
+	@Override
+	public void postRecovery() {
+		initOperators();
+	}
+	
+	private void initOperators() {
+			
+		for (User operator : operators.values()) {
+			operator.getLastUserTrack();
+		}
+		
+	}
 	//------------------------------------------------
 	
+	//operations on RAM ------------------------------
 	/**
 	 * allows to find the collection that is used to store 
 	 * the entities of the type passed by parameter.<br><br>
@@ -132,33 +152,27 @@ public class LocalRealtimeOperationStatus
 		Map<String, T> entityCollection = 
 			Collections.emptyMap();
 		
+		//TODO sort by descending demand
 		if(Setting.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió settings");
 			entityCollection = (Map<String, T>) settings;
 		}else if(Event.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió events");
 			entityCollection = (Map<String, T>) events;
 		}else if(Category.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió categorías");
 			entityCollection = (Map<String, T>) categories;
 		}else if(State.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió states");
 			entityCollection = (Map<String, T>) states;
 		}else if(Step.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió steps");
 			entityCollection = (Map<String, T>) steps;
 		}else if(Controller.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió controllers");
 			entityCollection = (Map<String, T>) controllers;
 		}else if(Omega.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió omegas");
 			entityCollection = (Map<String, T>) omegas;
 		}else if(Role.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió roles");
 			entityCollection = (Map<String, T>) roles;
 		}else if(User.class.isAssignableFrom(type)) {
-			System.out.println("Se elegigió operators");
 			entityCollection = (Map<String, T>) operators;
+		}else if(ControllerWorkState.class.isAssignableFrom(type)) {
+			entityCollection = (Map<String, T>) controllersEvents;
 		}else {
 			
 			throw new ATCRuntimeException(
@@ -172,36 +186,6 @@ public class LocalRealtimeOperationStatus
 		
 	}
 	
-	@SuppressWarnings("unchecked")
-	private <T extends Recoverable, V extends Recoverable> 
-		Map<String, ? extends List<V>> resolveList(
-				Class<T> keyType, Class<V> valueType){
-		
-		Map<String, ? extends List<V>> entityListCollection
-			= Collections.emptyMap();
-		
-		if(Controller.class.isAssignableFrom(keyType) && 
-				Event.class.isAssignableFrom(valueType)) {
-			entityListCollection = 
-				(Map<String, ? extends List<V>>) controllersEvents;
-		}else {
-			throw new ATCRuntimeException(
-				"There is no collection that supports that "
-				+ "key and entity type."
-			);
-		}
-		
-		return entityListCollection; 
-		
-	}
-	
-	private <T extends Recoverable> void print(Map<String, T> col) {
-		for (T e : col.values()) {
-			System.out.println(e.getKeyEntity());
-		}
-	}
-
-	//CRUD entities-----------------------------------
 	@Override
 	public <T extends Recoverable> void store(
 		Class<T> type, T entity) {
@@ -210,9 +194,6 @@ public class LocalRealtimeOperationStatus
 			(Map<String, T>) resolve(type);
 		
 		entityCollection.put(entity.getKeyEntity(), entity);
-		
-		System.out.println("GUARDÓ...");
-		print(entityCollection);
 		
 	}
 	
@@ -230,32 +211,24 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	@Override
-	public <T extends Recoverable, V extends Recoverable> 
-		void storeToList(Class<T> keyType, T keyEntity, 
-			Class<V> valueType, V valueEntity) {
-			
-		@SuppressWarnings("unchecked")
-		Map<String, List<V>> entityCollection = 
-			(Map<String, List<V>>) resolveList(keyType, valueType);
-		
-		entityCollection.computeIfAbsent(
-			keyEntity.getKeyEntity(), v -> new ArrayList<V>()
-		).add(valueEntity);
-		
-	}
-	
-	@Override
 	public <T extends Recoverable> List<T> 
 		retrieveAll(Class<T> type) {
 	
 		Map<String, T> entityCollection = 
 				(Map<String, T>) resolve(type);
 		
-		return new ArrayList<T>(
-				entityCollection.values());
+		List<T> resultValues = new ArrayList<T>(
+			entityCollection.values());
+		
+		if(resultValues == null || resultValues.isEmpty()) {
+			resultValues = Collections.emptyList();
+		}
+		
+		return resultValues;
 	
 	}
 	
+	@Override
 	public <T extends Recoverable> Optional<T> retrieve(
 			Class<T> type, String entityKey) {
 		
@@ -269,15 +242,27 @@ public class LocalRealtimeOperationStatus
 	}
 	
 	@Override
-	public <T extends Recoverable> T remove(
+	public <T extends Recoverable> Optional<T> remove(
 			Class<T> type, String entityKey) {
 	
 		Map<String, T> entityCollection = 
 				(Map<String, T>) resolve(type);
 		
-		return entityCollection.remove(entityKey);
+		T entity = entityCollection.remove(entityKey);
+		
+		return Optional.ofNullable(entity);
 	
 	}
+	
+	@Override
+	public <T extends Recoverable> void clear(Class<T> type) {
+	
+		Map<String, T> entityCollection = 
+				(Map<String, T>) resolve(type);
+		
+		entityCollection.clear();
+	
+	} 
 	
 	@Override
 	public <T extends Recoverable> List<T> filter(
@@ -287,7 +272,7 @@ public class LocalRealtimeOperationStatus
 		
 		//Retrieve concrete collection
 		Map<String, T> entityCollection = 
-				(Map<String, T>) resolve(type);
+			(Map<String, T>) resolve(type);
 		
 		//Retrieve filters patterns 
 		Pattern[] patterns = createPatterns(filters);
@@ -386,7 +371,6 @@ public class LocalRealtimeOperationStatus
 		return satisfacePatterns;
 		
 	}
-	
-	
-	
+	//------------------------------------------------
+
 }
