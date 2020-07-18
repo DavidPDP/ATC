@@ -30,6 +30,7 @@ import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
 import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
+import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
 import co.edu.icesi.metrocali.atc.services.notifications.events.EventStateChangeConcerner;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
@@ -62,7 +63,7 @@ public class Context implements EventStateChangeConcerner {
     @Autowired
     private CategoriesRepository categories;
     @Autowired
-    private OperatorsRepository operators;
+    private OperatorsService operators;
     @Autowired
     private SettingsRepository settings;
     @Autowired
@@ -95,7 +96,7 @@ public class Context implements EventStateChangeConcerner {
 					
     }
     public void updateCotrollers(){
-        List<Controller> controllers=operators.retrieveOnlineControllers();
+        List<Controller> controllers=operators.retrieveOOControllers();
         List<EvalController> evalControllers=new ArrayList<>();
         for (Controller controller : controllers) {
             evalControllers.add(new EvalController(controller));
@@ -190,7 +191,7 @@ public class Context implements EventStateChangeConcerner {
                 int idController = -1;
                 for (int i = tracks.size() - 1; i >= 0; i--) {
                     State state = tracks.get(i).getState();
-                    if (state.getName().equals(StateValue.In_Proccess.name())) {
+                    if (state.getName().equals(StateValue.Processing.name())) {
                         idController = tracks.get(i).getUser().getId();
                         break;
                     }
@@ -221,8 +222,7 @@ public class Context implements EventStateChangeConcerner {
 
     private boolean isEventDone(EvalEvent event) {
         State lastState = event.getLastEventTrack().getState();
-        boolean ret = lastState.getName().equals(StateValue.Verification.name());
-        ret |= lastState.getName().equals(StateValue.Archived.name());
+        boolean ret = lastState.getName().equals(StateValue.Verifying.name());
         return ret;
     }
 

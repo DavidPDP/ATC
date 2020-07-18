@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +30,9 @@ import co.edu.icesi.metrocali.atc.evaluator.expression.Functions;
 import co.edu.icesi.metrocali.atc.evaluator.expression.SpringExpressions;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
-import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
+import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
 
@@ -52,7 +51,7 @@ public class ContextTest {
     @Mock
     private CategoriesRepository categories;
     @Mock
-    private OperatorsRepository operators;
+    private OperatorsService operators;
     @Mock
     private SettingsRepository settings;
     @Mock
@@ -94,7 +93,7 @@ public class ContextTest {
         ObjectsToTest objectsToTest=ObjectsToTest.getInstance();
         List<Controller> controllers=objectsToTest.getUsers();
         HashMap<Integer,EvalParameter> parametersTest=objectsToTest.getParameters();
-        when(operators.retrieveOnlineControllers()).thenReturn(controllers);
+        when(operators.retrieveOOControllers()).thenReturn(controllers);
         when(categories.retrieveAll()).thenReturn(objectsToTest.getSubCategories());
         when(parameters.retrieveActiveByName("threshold" + 1000)).thenReturn(Optional.of(parametersTest.get(1000)));
         when(parameters.retrieveActiveByName("threshold" + 990)).thenReturn(Optional.of(parametersTest.get(990)));

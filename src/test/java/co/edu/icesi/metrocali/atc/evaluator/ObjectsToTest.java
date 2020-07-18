@@ -126,35 +126,35 @@ public class ObjectsToTest {
         Event event8=createEvent(8, 450, new Timestamp(System.currentTimeMillis()-1000*60*2), subCategories.get(1), users.get(2));//7
        
         event1.addEventTrack(createEventState(1, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*4),users.get(0)));//3mn
-        event1.addEventTrack(createEventState(2, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*4), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(0)));//2mn
-        event1.addEventTrack(createEventState(3, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(0)));//>2mn
+        event1.addEventTrack(createEventState(2, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*4), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(0)));//2mn
+        event1.addEventTrack(createEventState(3, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(0)));//>2mn
 
         event2.addEventTrack(createEventState(4, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(1)));//2mn
-        event2.addEventTrack(createEventState(5, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*6),users.get(1)));//2mn
-        event2.addEventTrack(createEventState(6, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*6), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(1)));//4mn
-        event2.addEventTrack(createEventState(7, states.get(StateValue.Verification), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(1)));//>2mn
+        event2.addEventTrack(createEventState(5, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*6),users.get(1)));//2mn
+        event2.addEventTrack(createEventState(6, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*6), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(1)));//4mn
+        event2.addEventTrack(createEventState(7, states.get(StateValue.Verifying), new Timestamp(System.currentTimeMillis()-1000*60*2),null,users.get(1)));//>2mn
 
         event3.addEventTrack(createEventState(8, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*6), new Timestamp(System.currentTimeMillis()-1000*60*5),users.get(2)));//1mn
-        event3.addEventTrack(createEventState(9, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*5), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//3mn
-        event3.addEventTrack(createEventState(10, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2mn
+        event3.addEventTrack(createEventState(9, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*5), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//3mn
+        event3.addEventTrack(createEventState(10, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2mn
 
         event4.addEventTrack(createEventState(11, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*4), new Timestamp(System.currentTimeMillis()-1000*60*3),users.get(3)));//1mn
-        event4.addEventTrack(createEventState(12, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(3)));//2mn
-        event4.addEventTrack(createEventState(13, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(3)));//1mn
+        event4.addEventTrack(createEventState(12, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(3)));//2mn
+        event4.addEventTrack(createEventState(13, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(3)));//1mn
 
         event5.addEventTrack(createEventState(14, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(0)));//2mn
-        event5.addEventTrack(createEventState(15, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(0)));//1mn
-        event5.addEventTrack(createEventState(16, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*3),users.get(0)));//4mn
-        event5.addEventTrack(createEventState(17, states.get(StateValue.On_Hold), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(0)));//2mn
-        event5.addEventTrack(createEventState(18, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(0)));//>1
+        event5.addEventTrack(createEventState(15, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(0)));//1mn
+        event5.addEventTrack(createEventState(16, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*3),users.get(0)));//4mn
+        event5.addEventTrack(createEventState(17, states.get(StateValue.Waiting), new Timestamp(System.currentTimeMillis()-1000*60*3), new Timestamp(System.currentTimeMillis()-1000*60*1),users.get(0)));//2mn
+        event5.addEventTrack(createEventState(18, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*1), null,users.get(0)));//>1
 
         event6.addEventTrack(createEventState(19, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*5),users.get(1)));//2mn
-        event6.addEventTrack(createEventState(20, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*5),null,users.get(1)));//>5mn
+        event6.addEventTrack(createEventState(20, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*5),null,users.get(1)));//>5mn
 
         event7.addEventTrack(createEventState(21, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*10), new Timestamp(System.currentTimeMillis()-1000*60*8),users.get(2)));//2mn
-        event7.addEventTrack(createEventState(22, states.get(StateValue.Assigned), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(2)));//1mn
-        event7.addEventTrack(createEventState(23, states.get(StateValue.In_Proccess), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//5mn
-        event7.addEventTrack(createEventState(24, states.get(StateValue.Verification), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2
+        event7.addEventTrack(createEventState(22, states.get(StateValue.Approbing), new Timestamp(System.currentTimeMillis()-1000*60*8), new Timestamp(System.currentTimeMillis()-1000*60*7),users.get(2)));//1mn
+        event7.addEventTrack(createEventState(23, states.get(StateValue.Processing), new Timestamp(System.currentTimeMillis()-1000*60*7), new Timestamp(System.currentTimeMillis()-1000*60*2),users.get(2)));//5mn
+        event7.addEventTrack(createEventState(24, states.get(StateValue.Verifying), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(2)));//>2
 
         event8.addEventTrack(createEventState(21, states.get(StateValue.Pending), new Timestamp(System.currentTimeMillis()-1000*60*2), null,users.get(3)));//>2
 
@@ -217,10 +217,10 @@ public class ObjectsToTest {
         states.put(StateValue.Busy,createState(StateValue.Busy.name()));//1
         states.put(StateValue.Unavailable,createState(StateValue.Unavailable.name()));//2
         states.put(StateValue.Pending,createState(StateValue.Pending.name()));//3
-        states.put(StateValue.Assigned,createState(StateValue.Assigned.name()));//4
-        states.put(StateValue.In_Proccess,createState(StateValue.In_Proccess.name()));//5
-        states.put(StateValue.On_Hold,createState(StateValue.On_Hold.name()));//6
-        states.put(StateValue.Verification,createState(StateValue.Verification.name()));//7
+        states.put(StateValue.Approbing,createState(StateValue.Approbing.name()));//4
+        states.put(StateValue.Processing,createState(StateValue.Processing.name()));//5
+        states.put(StateValue.Waiting,createState(StateValue.Waiting.name()));//6
+        states.put(StateValue.Verifying,createState(StateValue.Verifying.name()));//7
 
     }
 

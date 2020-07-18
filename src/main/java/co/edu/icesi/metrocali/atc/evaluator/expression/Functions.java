@@ -80,7 +80,7 @@ public class Functions {
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
                 boolean assigned = eventTrack.getState().getName()
-                        .equalsIgnoreCase(StateValue.Assigned.name());
+                        .equalsIgnoreCase(StateValue.Approbing.name());
                 if (assigned) {
                     Timestamp last=eventTrack.getEndTime();
                     if(last==null){
@@ -126,7 +126,7 @@ public class Functions {
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
                 boolean inProcess = eventTrack.getState().getName()
-                        .equalsIgnoreCase(StateValue.In_Proccess.name());
+                        .equalsIgnoreCase(StateValue.Processing.name());
                 if (inProcess) {
                     Timestamp last=eventTrack.getEndTime();
                     if(last==null){
@@ -150,7 +150,7 @@ public class Functions {
             double time = 0;
             for (EventTrack eventTrack : eventTracks) {
                 boolean inHold =
-                        eventTrack.getState().getName().equalsIgnoreCase(StateValue.On_Hold.name());
+                        eventTrack.getState().getName().equalsIgnoreCase(StateValue.Waiting.name());
                 if (inHold) {
                     Timestamp last=eventTrack.getEndTime();
                     if(last==null){
@@ -175,11 +175,11 @@ public class Functions {
             for (EventTrack eventTrack : eventTracks) {
 
                 boolean stayTime =
-                        eventTrack.getState().getName().equalsIgnoreCase(StateValue.On_Hold.name());
+                        eventTrack.getState().getName().equalsIgnoreCase(StateValue.Waiting.name());
                 stayTime |= eventTrack.getState().getName()
-                        .equalsIgnoreCase(StateValue.Assigned.name());
+                        .equalsIgnoreCase(StateValue.Approbing.name());
                 stayTime |= eventTrack.getState().getName()
-                        .equalsIgnoreCase(StateValue.In_Proccess.name());
+                        .equalsIgnoreCase(StateValue.Processing.name());
                 stayTime |=
                         eventTrack.getState().getName().equalsIgnoreCase(StateValue.Pending.name());
 
@@ -334,7 +334,6 @@ public class Functions {
         for (UserTrack userTrack : userTracks) {
             boolean all = userTrack.getState().getName().equalsIgnoreCase(StateValue.Busy.name());
             all |= userTrack.getState().getName().equalsIgnoreCase(StateValue.Available.name());
-            all |= userTrack.getState().getName().equalsIgnoreCase(StateValue.Assigned.name());
             all |= userTrack.getState().getName().equalsIgnoreCase(StateValue.Unavailable.name());
             
             if (all) {
