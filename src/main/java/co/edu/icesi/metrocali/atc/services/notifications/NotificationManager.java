@@ -109,11 +109,14 @@ public class NotificationManager
 		
 		if(notification.getAddressee().isPresent()) {
 			
-			String channelKey = notification.getAddressee().get()
+
+			String channelKey = notification.getAddressee().get() 
 				+ notification.getType().name(); 
 			
 			ExternalConcerner concerner = 
 					unicastChannels.get(channelKey);
+			
+			System.out.println(concerner);
 			
 			communicationDialect.sendToQueue(
 				concerner.getId(), 
@@ -132,7 +135,7 @@ public class NotificationManager
 		for (NotificationType concern : concerns) {
 			
 			String channelKey = 
-				externalConcerner.getAccountName() + concern;
+				externalConcerner.getAccountName() + concern.name();
 			
 			unicastChannels.put(channelKey, externalConcerner);
 			

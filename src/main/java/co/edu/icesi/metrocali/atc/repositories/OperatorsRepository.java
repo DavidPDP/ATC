@@ -13,8 +13,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import co.edu.icesi.metrocali.atc.entities.events.UserTrack;
-import co.edu.icesi.metrocali.atc.entities.operators.Controller;
-import co.edu.icesi.metrocali.atc.entities.operators.Omega;
 import co.edu.icesi.metrocali.atc.entities.policies.User;
 import co.edu.icesi.metrocali.atc.exceptions.bb.ResourceNotFound;
 
@@ -71,95 +69,25 @@ public class OperatorsRepository {
 		
 	}
 	
-	/**
-	 * Retrieves all controllers regardless of whether they are 
-	 * active or not (deep copy).
-	 * @return List of all registered users.
-	 */
-	public List<Controller> retrieveAllControllers() {
+	public List<User> retrieveOnline() {
 		
-		List<Controller> controllers = null;
+		List<User> operators = null;
 		
 		try {
 			
-			controllers = 
-				blackboxApi.exchange(
-					blackboxPoliciesApiURL + "/users/types?type=Controller", 
-					HttpMethod.GET, null, 
-					new ParameterizedTypeReference<List<Controller>>() {}
-				).getBody();
-			
-		}catch (ResourceNotFound e) {
-			controllers = Collections.emptyList();
-		}
-		
-		return controllers;
-		
-	}
-	
-	public List<Controller> retrieveOnlineControllers() {
-		
-		List<Controller> controllers = null;
-		
-		try {
-			
-			controllers = 
-				blackboxApi.exchange(
-					blackboxPoliciesApiURL + "/users/controllers/online",
-					HttpMethod.GET, null, 
-					new ParameterizedTypeReference<List<Controller>>() {}
-				).getBody();
-			
-		}catch(ResourceNotFound e) {
-			controllers = Collections.emptyList();
-		}
-		
-		return controllers;
-		
-	}
-	
-	public List<Omega> retrieveAllOmegas() {
-		
-		List<Omega> omegas = null;
-		
-		try {
-			
-			omegas = 
-				blackboxApi.exchange(
-					blackboxPoliciesApiURL + "/users/types?type=Omega", 
-					HttpMethod.GET, null, 
-					new ParameterizedTypeReference<List<Omega>>() {}
-				).getBody();
-			
-		}catch (ResourceNotFound e) {
-			omegas = Collections.emptyList();
-		}
-		
-		return omegas;
-		
-	}
-	
-	public List<User> retrieveAllAdmins() {
-		
-		List<User> admins = null;
-		
-		try {
-			
-			admins = 
-				blackboxApi.exchange(
-					blackboxPoliciesApiURL + "/users/types?type=Admin", 
+			operators =  
+				blackboxApi.exchange(blackboxPoliciesApiURL + "/users/online", 
 					HttpMethod.GET, null, 
 					new ParameterizedTypeReference<List<User>>() {}
 				).getBody();
 			
-		}catch(ResourceNotFound e) {
-			admins = Collections.emptyList();
+		}catch (ResourceNotFound e) {
+			operators = Collections.emptyList();
 		}
 		
-		return admins;
+		return operators;
 		
 	}
-	
 	
 	public User retrieve(String accountName) {
 			

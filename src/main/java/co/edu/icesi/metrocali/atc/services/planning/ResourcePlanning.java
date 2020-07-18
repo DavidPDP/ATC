@@ -215,13 +215,13 @@ public class ResourcePlanning implements EventStateChangeGenerator {
 	
 	//Event Allocation -----------------------------
 	public void allocation() {
-		System.out.println("Query Allocation---------");
+		
 		Optional<Event> nextEvent = showNextPendingEvent();
 		Optional<User> nextController = 
 				showNextAvailableController();
 		
 		if(nextEvent.isPresent() && nextController.isPresent()) {
-						
+			System.out.println("Query Allocation---------");
 			Event event = getNextPendingEvent();
 			User controller = getNextAvailableController();
 			
@@ -245,7 +245,6 @@ public class ResourcePlanning implements EventStateChangeGenerator {
 			
 			notifyNewStateChange(stateEvent);
 			
-			System.out.println("Allocation-----------");
 		}
 		
 	}
