@@ -2,7 +2,6 @@ package co.edu.icesi.metrocali.atc.evaluator.expression;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
