@@ -27,11 +27,11 @@ import co.edu.icesi.metrocali.atc.entities.operators.Controller;
 import co.edu.icesi.metrocali.atc.entities.policies.Setting;
 import co.edu.icesi.metrocali.atc.repositories.CategoriesRepository;
 import co.edu.icesi.metrocali.atc.repositories.EventsRepository;
-import co.edu.icesi.metrocali.atc.repositories.OperatorsRepository;
 import co.edu.icesi.metrocali.atc.repositories.SettingsRepository;
 import co.edu.icesi.metrocali.atc.repositories.evaluator.EvalParametersRepository;
 import co.edu.icesi.metrocali.atc.services.entities.OperatorsService;
 import co.edu.icesi.metrocali.atc.services.notifications.events.EventStateChangeConcerner;
+import co.edu.icesi.metrocali.atc.services.realtime.RealtimeOperationStatus;
 import co.edu.icesi.metrocali.atc.vos.StateNotification;
 
 @Service
@@ -63,7 +63,7 @@ public class Context implements EventStateChangeConcerner {
     @Autowired
     private CategoriesRepository categories;
     @Autowired
-    private OperatorsService operators;
+    private RealtimeOperationStatus realtimeOpStatus;
     @Autowired
     private SettingsRepository settings;
     @Autowired
@@ -96,7 +96,7 @@ public class Context implements EventStateChangeConcerner {
 					
     }
     public void updateCotrollers(){
-        List<Controller> controllers=operators.retrieveOOControllers();
+        List<Controller> controllers=realtimeOpStatus.retrieveAll(Controller.class);
         List<EvalController> evalControllers=new ArrayList<>();
         for (Controller controller : controllers) {
             evalControllers.add(new EvalController(controller));
